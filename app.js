@@ -642,34 +642,43 @@ function renderCurrentQuestion() {
   dom.skipQuestionBtn.style.display = 'inline-flex';
 }
 
-// 1. Множественный выбор
+// 1. Множественный выбор (с динамическим перемешиванием вариантов)
 function renderChoiceQuestion(q) {
   const container = document.createElement('div');
   container.className = 'options-list';
   const letters = ['A', 'B', 'C', 'D'];
 
-  q.options.forEach((optText, idx) => {
+  // Генерируем случайную перестановку вариантов для текущего показа
+  const displayedIndices = q.options.map((_, i) => i);
+  shuffleArray(displayedIndices);
+  q._displayedIndices = displayedIndices;
+
+  displayedIndices.forEach((originalIdx, displayedIdx) => {
+    const optText = q.options[originalIdx];
     const btn = document.createElement('button');
     btn.className = 'option-btn';
-    btn.id = `option-btn-${idx}`;
+    btn.id = `option-btn-${displayedIdx}`;
     btn.innerHTML = `
-      <span class="option-marker">${letters[idx]}</span>
+      <span class="option-marker">${letters[displayedIdx]}</span>
       <span class="option-text">${optText}</span>
-      <span class="option-kbd">[${idx + 1}]</span>
+      <span class="option-kbd">[${displayedIdx + 1}]</span>
     `;
-    btn.addEventListener('click', () => selectChoiceOption(idx));
+    btn.addEventListener('click', () => selectChoiceOption(displayedIdx));
     container.appendChild(btn);
   });
 
   dom.dynamicQuestionBody.appendChild(container);
 }
 
-function selectChoiceOption(selectedIdx) {
+function selectChoiceOption(selectedDisplayedIdx) {
   if (QuizState.isAnswered) return;
   QuizState.isAnswered = true;
 
   const q = QuizState.currentRoundQuestions[QuizState.currentIndex];
-  const isCorrect = selectedIdx === q.correct;
+  const displayedIndices = q._displayedIndices || q.options.map((_, i) => i);
+  const chosenOriginalIdx = displayedIndices[selectedDisplayedIdx];
+  const isCorrect = (chosenOriginalIdx === q.correct);
+  const correctDisplayedIdx = displayedIndices.indexOf(q.correct);
 
   if (isCorrect) {
     QuizState.score++;
@@ -686,17 +695,19 @@ function selectChoiceOption(selectedIdx) {
   QuizState.userAnswers.push({
     question: q,
     type: 'choice',
-    selectedIdx: selectedIdx,
+    selectedIdx: chosenOriginalIdx,
+    selectedText: q.options[chosenOriginalIdx],
+    correctText: q.options[q.correct],
     isCorrect: isCorrect
   });
 
   const buttons = dom.dynamicQuestionBody.querySelectorAll('.option-btn');
   buttons.forEach((btn, idx) => {
     btn.disabled = true;
-    if (idx === q.correct) {
+    if (idx === correctDisplayedIdx) {
       btn.classList.add('correct');
     }
-    if (idx === selectedIdx && !isCorrect) {
+    if (idx === selectedDisplayedIdx && !isCorrect) {
       btn.classList.add('wrong');
     }
   });
@@ -797,7 +808,7 @@ function handleOpenSubmit(input) {
   revealAnswerExplanation(q);
 }
 
-// 3. Вопрос на соответствие (1А 2Б 3В 4Г)
+// 3. Вопрос на соответствие (1А 2Б 3В 4Г с динамическим перемешиванием определений)
 function renderMatchingQuestion(q) {
   const wrapper = document.createElement('div');
   wrapper.className = 'matching-wrapper';
@@ -806,6 +817,10 @@ function renderMatchingQuestion(q) {
   q.leftItems.forEach(item => {
     selectedMatches[item.id] = null;
   });
+
+  // Случайно перемешиваем порядок карточек определений в правом столбце
+  const displayedRightItems = [...q.rightItems];
+  shuffleArray(displayedRightItems);
 
   wrapper.innerHTML = `
     <!-- Колонки с терминами и определениями -->
@@ -819,8 +834,8 @@ function renderMatchingQuestion(q) {
         `).join('')}
       </div>
       <div class="matching-col">
-        <div class="matching-col-header">А..Г Определения:</div>
-        ${q.rightItems.map(item => `
+        <div class="matching-col-header">А..Г Определения (в случайном порядке):</div>
+        ${displayedRightItems.map(item => `
           <div class="matching-item-card" data-card-right="${item.id}">
             <strong>${item.id}.</strong> <span>${item.text}</span>
           </div>
@@ -1086,9 +1101,10 @@ function renderRoundReview() {
       userAnsHtml = `<div class="review-ans-row review-ans-user"><strong>Ваше сопоставление:</strong> ${userText}</div>`;
       correctAnsHtml = `<div class="review-ans-row review-ans-correct"><strong>Правильное соответствие:</strong> ${q.correctDisplay}</div>`;
     } else {
-      const userText = ans.skipped ? 'Пропущен' : (ans.selectedIdx !== null && ans.selectedIdx !== undefined ? q.options[ans.selectedIdx] : '—');
+      const userText = ans.skipped ? 'Пропущен' : (ans.selectedText || (ans.selectedIdx !== null && ans.selectedIdx !== undefined ? q.options[ans.selectedIdx] : '—'));
+      const correctText = ans.correctText || q.options[q.correct];
       userAnsHtml = `<div class="review-ans-row review-ans-user"><strong>Ваш ответ:</strong> ${userText}</div>`;
-      correctAnsHtml = `<div class="review-ans-row review-ans-correct"><strong>Правильный ответ:</strong> ${q.options[q.correct]}</div>`;
+      correctAnsHtml = `<div class="review-ans-row review-ans-correct"><strong>Правильный ответ:</strong> ${correctText}</div>`;
     }
 
     item.innerHTML = `
