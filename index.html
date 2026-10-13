@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Психогенетика | Веб-тренажер определений и тестов</title>
-  <meta name="description" content="Интерактивный веб-тренажер по психогенетике для магистрантов: тесты по 5 вопросов со случайным выбором, изучение ключевых определений, генома, фенотипа и истории науки.">
-  <meta name="keywords" content="психогенетика, геном, фенотип, генотип, кариотип, тесты психогенетика, магистратура 2026">
+  <title>Психогенетика | Интерактивный веб-тренажер</title>
+  <meta name="description" content="Интерактивный веб-тренажер по курсу психогенетики: случайные тесты по 5 вопросов, сопоставление 1А 2Б 3В 4Г, открытые ответы, разборы определений, геном и фенотип.">
+  <meta name="keywords" content="психогенетика, геном, фенотип, генотип, кариотип, тесты психогенетика, онлайн тренажер">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,23 +18,27 @@
   <canvas id="confetti-canvas"></canvas>
 
   <div class="app-wrapper">
-    <!-- Header -->
+    <!-- Header (No LAN, No Magistratura) -->
     <header class="app-header">
       <div class="brand">
         <span class="brand-icon">🧬</span>
-        <div>
-          <h1 id="app-heading">Психогенетика: Тренажер</h1>
-          <span class="brand-badge">Магистратура • 2026</span>
+        <div class="brand-info">
+          <h1 id="app-heading">Психогенетика</h1>
+          <p class="brand-subtitle">Интерактивный тренажер тестов и понятий</p>
         </div>
       </div>
       
       <div class="header-controls">
-        <button id="lan-share-btn" class="nav-btn" title="Открыть на смартфоне в локальной сети">
-          <span>📱</span> LAN: 192.168.31.210:8080
+        <div id="session-stats-chip" class="stats-chip" title="Точность текущей сессии и серия правильных ответов">
+          <span class="stats-chip-acc">🎯 <strong id="stats-acc-val">100%</strong></span>
+          <span class="stats-chip-sep">•</span>
+          <span class="stats-chip-streak">🔥 <strong id="stats-streak-val">0</strong></span>
+        </div>
+        <button id="sound-toggle-btn" class="header-icon-btn" title="Звуковые эффекты (вкл/выкл)">
+          <span id="sound-icon">🔊</span>
         </button>
-        <button id="theme-toggle-btn" class="theme-toggle-btn" title="Переключить тему">
+        <button id="theme-toggle-btn" class="header-icon-btn" title="Переключить тему (Светлая / Темная)">
           <span id="theme-icon">🌙</span>
-          <span id="theme-text">Темная</span>
         </button>
       </div>
     </header>
@@ -42,10 +46,14 @@
     <!-- Navigation Tabs -->
     <nav class="tabs-nav" aria-label="Вкладки тренажера">
       <button id="tab-btn-quiz" class="tab-btn active">
-        <span>🎯</span> Тест-тренажер (5 вопросов)
+        <span class="tab-icon">🎯</span>
+        <span class="tab-title">Тест-тренажер</span>
+        <span class="tab-count-badge" id="tab-quiz-count">95 вопр.</span>
       </button>
       <button id="tab-btn-glossary" class="tab-btn">
-        <span>📖</span> Шпаргалка и Определения
+        <span class="tab-icon">📖</span>
+        <span class="tab-title">Справочник и Термины</span>
+        <span class="tab-count-badge" id="tab-glossary-count">25 тем</span>
       </button>
     </nav>
 
@@ -55,42 +63,49 @@
       <section id="quiz-view" class="view-section">
         <!-- Control bar -->
         <div class="quiz-controls-bar">
-          <div class="filter-group">
-            <label for="category-filter-select" class="filter-label">Тема:</label>
-            <select id="category-filter-select" class="filter-select">
-              <option value="all">Все темы курса (65+ вопросов)</option>
-              <option value="definitions">Определения и термины (Геном, Фенотип...)</option>
-              <option value="history_basics">Введение и история (1865 г., Гальтон...)</option>
-              <option value="molecular">Молекулярные основы (ДНК, РНК, код...)</option>
-              <option value="genetics_laws">Законы Менделя и взаимодействия генов</option>
-              <option value="environment">Среда и генотип-средовые эффекты</option>
-              <option value="regulation_stress">Регуляция генов и стресс</option>
-              <option value="methods">Методы психогенетики (близнецы, GWAS...)</option>
-              <option value="personality_iq">Личность, интеллект, нейрохимия</option>
-            </select>
+          <div class="filters-row">
+            <div class="filter-group">
+              <label for="category-filter-select" class="filter-label">📚 Тема:</label>
+              <select id="category-filter-select" class="filter-select">
+                <option value="all">Все темы курса (65+ вопросов)</option>
+                <option value="definitions">Определения и термины (Геном, Фенотип...)</option>
+                <option value="history_basics">Введение и история (1865 г., Гальтон...)</option>
+                <option value="molecular">Молекулярные основы (ДНК, РНК, код...)</option>
+                <option value="genetics_laws">Законы Менделя и взаимодействия генов</option>
+                <option value="environment">Среда и генотип-средовые эффекты</option>
+                <option value="regulation_stress">Регуляция генов и стресс</option>
+                <option value="methods">Методы психогенетики (близнецы, GWAS...)</option>
+                <option value="personality_iq">Личность, интеллект, нейрохимия</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="type-filter-select" class="filter-label">🧩 Формат:</label>
+              <select id="type-filter-select" class="filter-select">
+                <option value="all">Все форматы (95 вопр.)</option>
+                <option value="matching">🧩 Сопоставление (1А 2Б 3В 4Г)</option>
+                <option value="open">✍️ Открытый ответ (термин)</option>
+                <option value="choice">🔘 Выбор 1 из 4</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="quiz-mode-select" class="filter-label">⏱️ Раунд:</label>
+              <select id="quiz-mode-select" class="filter-select">
+                <option value="5">Блиц: 5 вопросов</option>
+                <option value="10">Марафон: 10 вопросов</option>
+                <option value="all">Все вопросы пула</option>
+              </select>
+            </div>
           </div>
 
-          <div class="filter-group">
-            <label for="type-filter-select" class="filter-label">Формат:</label>
-            <select id="type-filter-select" class="filter-select">
-              <option value="all">Все форматы (95+ вопр.)</option>
-              <option value="matching">🧩 Сопоставление (1А 2Б 3В 4Г)</option>
-              <option value="open">✍️ Открытый ответ (термин)</option>
-              <option value="choice">🔘 Выбор 1 из 4</option>
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label for="quiz-mode-select" class="filter-label">Режим:</label>
-            <select id="quiz-mode-select" class="filter-select">
-              <option value="5">Экспресс: 5 вопросов</option>
-              <option value="10">Марафон: 10 вопросов</option>
-              <option value="all">Все вопросы пула</option>
-            </select>
-          </div>
-
-          <div class="stats-pill" id="pool-counter-badge">
-            В пуле: 95 вопросов
+          <div class="controls-actions-row">
+            <button id="quick-blitz-btn" class="quick-action-btn" title="Сгенерировать случайный раунд заново">
+              <span>🎲</span> Перемешать
+            </button>
+            <div class="stats-pill" id="pool-counter-badge">
+              В пуле: 95 вопр.
+            </div>
           </div>
         </div>
 
@@ -98,11 +113,13 @@
         <div id="quiz-card-container" class="quiz-card">
           <!-- Question header -->
           <div class="quiz-card-header">
-            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-              <span id="question-type-badge" class="question-badge" style="background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); border-color: rgba(6, 182, 212, 0.3);">Формат</span>
-              <span id="question-category-badge" class="question-badge">Категория</span>
+            <div class="badge-group">
+              <span id="question-type-badge" class="question-badge type-badge">Формат</span>
+              <span id="question-category-badge" class="question-badge category-badge">Категория</span>
             </div>
-            <span id="question-counter-display" class="question-counter">Вопрос 1 из 5</span>
+            <div class="header-right-meta">
+              <span id="question-counter-display" class="question-counter">Вопрос 1 из 5</span>
+            </div>
           </div>
 
           <!-- Progress bar -->
@@ -123,25 +140,38 @@
           <!-- Explanation Box -->
           <div id="explanation-box-card" class="explanation-box">
             <div class="explanation-header">
-              <span>💡</span> Пояснение и определение
+              <div class="explanation-title-row">
+                <span>💡</span> <strong>Пояснение и теория</strong>
+              </div>
+              <button id="find-in-glossary-btn" class="glossary-jump-btn" title="Открыть этот термин в справочнике">
+                <span>📖</span> В справочник
+              </button>
             </div>
             <p id="explanation-text-content" class="explanation-text"></p>
           </div>
 
           <!-- Card Footer -->
           <div class="quiz-card-footer">
-            <button id="skip-question-btn" class="btn-secondary">Пропустить</button>
-            <button id="next-question-btn" class="btn-primary" style="display: none;">
-              Следующий вопрос <span>→</span>
+            <button id="skip-question-btn" class="btn-secondary" title="Пропустить этот вопрос">
+              <span>Пропустить</span> <kbd class="kbd-hint">[Esc]</kbd>
+            </button>
+            <button id="next-question-btn" class="btn-primary" style="display: none;" title="Перейти к следующему вопросу">
+              <span>Следующий вопрос</span> <kbd class="kbd-hint">[Enter ↵]</kbd> <span>→</span>
             </button>
           </div>
         </div>
 
         <!-- Round Result Screen -->
         <div id="result-screen-container" class="quiz-card result-screen">
-          <div class="score-badge-circle">
-            <span id="result-score-num" class="score-number">5</span>
-            <span id="result-score-total" class="score-total">из 5</span>
+          <div class="result-score-gauge">
+            <svg class="score-ring-svg" viewBox="0 0 120 120">
+              <circle class="score-ring-bg" cx="60" cy="60" r="50"></circle>
+              <circle id="score-ring-fill" class="score-ring-fill" cx="60" cy="60" r="50"></circle>
+            </svg>
+            <div class="score-badge-circle">
+              <span id="result-score-num" class="score-number">5</span>
+              <span id="result-score-total" class="score-total">из 5</span>
+            </div>
           </div>
           
           <h2 id="result-verdict-title" class="result-title">Отличный результат! 🎉</h2>
@@ -149,11 +179,15 @@
             Вы превосходно знаете базовые термины и концепции психогенетики.
           </p>
 
+          <div id="result-categories-breakdown" class="result-categories-pills">
+            <!-- Rendered by JS -->
+          </div>
+
           <div class="result-actions">
             <button id="retry-new-random-btn" class="btn-primary">
               🎲 Следующие 5 случайных вопросов
             </button>
-            <button id="review-mistakes-btn" class="btn-secondary" style="display: none;">
+            <button id="review-mistakes-btn" class="btn-secondary error-review-btn" style="display: none;">
               🔄 Разобрать ошибки (<span id="mistakes-count-badge">0</span>)
             </button>
             <button id="reset-session-btn" class="btn-secondary">
@@ -163,7 +197,10 @@
 
           <!-- Round Question Review -->
           <div id="round-review-list" class="review-section">
-            <h3><span>📋</span> Обзор ответов раунда:</h3>
+            <div class="review-header">
+              <h3><span>📋</span> Подробный разбор ответов раунда:</h3>
+              <span class="review-tip">Нажмите на любой вопрос, чтобы просмотреть подробности</span>
+            </div>
             <div id="review-items-container">
               <!-- Rendered by JS -->
             </div>
@@ -175,46 +212,84 @@
       <section id="glossary-view" class="glossary-screen">
         <!-- Visual Reference Banner (Ответы на ключевые вопросы) -->
         <div class="cheat-sheet-banner">
-          <h2 class="cheat-sheet-title">
-            <span>🧬</span> Ключевой базис курса: Что к чему относится?
-          </h2>
+          <div class="cheat-sheet-header">
+            <h2 class="cheat-sheet-title">
+              <span>🧬</span> Ключевой базис курса: Что к чему относится?
+            </h2>
+            <span class="cheat-sheet-badge">Экспресс-шпаргалка</span>
+          </div>
           <div class="cheat-sheet-grid">
-            <div class="cheat-box">
-              <strong>📅 1865 год</strong>
+            <div class="cheat-box" data-term="1865 год">
+              <div class="cheat-box-top">
+                <strong>📅 1865 год</strong>
+                <span class="cheat-tag">История</span>
+              </div>
               <p>Год рождения психогенетики: выход книги Ф. Гальтона «Наследственный талант и характер». (1900 г. — официальная генетика Менделя; 1909 г. — термины Иоганнсена).</p>
             </div>
-            <div class="cheat-box">
-              <strong>🔬 ГЕНОМ</strong>
-              <p>Полная совокупность наследственного материала клетки (23 пары хромосом ядра + кольцевая митохондриальная ДНК). ~1,5% кодирует белки.</p>
+            <div class="cheat-box" data-term="Геном">
+              <div class="cheat-box-top">
+                <strong>🔬 ГЕНОМ</strong>
+                <span class="cheat-tag">Определение</span>
+              </div>
+              <p>Вся совокупность наследственного генетического материала клетки (23 пары хромосом ядра + кольцевая мтДНК). ~1,5% кодирует белки.</p>
             </div>
-            <div class="cheat-box">
-              <strong>🧬 ГЕНОТИП</strong>
-              <p>Индивидуальная генетическая конституция (набор генов и аллелей), возникает при зачатии и стабилен всю жизнь.</p>
+            <div class="cheat-box" data-term="Генотип">
+              <div class="cheat-box-top">
+                <strong>🧬 ГЕНОТИП</strong>
+                <span class="cheat-tag">Определение</span>
+              </div>
+              <p>Индивидуальная генетическая конституция (набор генов и аллелей), возникает при зачатии и стабилен всю жизнь во всех соматических клетках.</p>
             </div>
-            <div class="cheat-box">
-              <strong>👤 ФЕНОТИП</strong>
-              <p>Всё наблюдаемое: биохимия, морфология, IQ, темперамент, поведение. Результат: <em>Фенотип = Генотип + Среда + Взаимодействие</em>.</p>
+            <div class="cheat-box" data-term="Фенотип">
+              <div class="cheat-box-top">
+                <strong>👤 ФЕНОТИП</strong>
+                <span class="cheat-tag">Определение</span>
+              </div>
+              <p>Все наблюдаемые признаки: биохимия, морфология, IQ, темперамент, поведение. Результат: <em>Фенотип = Генотип + Среда + Взаимодействие (G×E)</em>.</p>
             </div>
-            <div class="cheat-box">
-              <strong>📊 КАРИОТИП</strong>
+            <div class="cheat-box" data-term="Кариотип">
+              <div class="cheat-box-top">
+                <strong>📊 КАРИОТИП</strong>
+                <span class="cheat-tag">Определение</span>
+              </div>
               <p>Хромосомный паспорт вида: 46 хромосом (22 пары аутосом + 1 пара половых XX/XY).</p>
             </div>
-            <div class="cheat-box">
-              <strong>🌿 СРЕДА (G × E)</strong>
-              <p><strong>Разделенная:</strong> общесемейная (сходство).<br><strong>Неразделенная:</strong> индивидуальный опыт (различия).<br><strong>Ковариация:</strong> пассивная, реактивная, активная.</p>
+            <div class="cheat-box" data-term="Среда">
+              <div class="cheat-box-top">
+                <strong>🌿 СРЕДА (G × E)</strong>
+                <span class="cheat-tag">Среда</span>
+              </div>
+              <p><strong>Разделенная:</strong> общесемейная (сходство детей).<br><strong>Неразделенная:</strong> уникальный личный опыт (различия).<br><strong>Ковариация:</strong> пассивная, реактивная, активная.</p>
             </div>
           </div>
         </div>
 
-        <!-- Search Bar -->
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input 
-            type="text" 
-            id="glossary-search-input" 
-            class="search-input" 
-            placeholder="Поиск по терминам и определениям (например: геном, фенотип, локус, Гальтон, стресс)..."
-          >
+        <!-- Search Bar & Category Filters -->
+        <div class="glossary-search-wrapper">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input 
+              type="text" 
+              id="glossary-search-input" 
+              class="search-input" 
+              placeholder="Поиск по терминам и определениям (например: геном, фенотип, локус, Гальтон, стресс)..."
+            >
+            <button id="clear-search-btn" class="clear-search-btn" title="Очистить поиск" style="display: none;">✕</button>
+          </div>
+
+          <!-- Category filter pills -->
+          <div class="glossary-categories-filter">
+            <button class="gloss-cat-btn active" data-cat="all">Все термины</button>
+            <button class="gloss-cat-btn" data-cat="Определение">Определения</button>
+            <button class="gloss-cat-btn" data-cat="История">История</button>
+            <button class="gloss-cat-btn" data-cat="Генетика">Генетика</button>
+            <button class="gloss-cat-btn" data-cat="Среда">Среда</button>
+            <button class="gloss-cat-btn" data-cat="Методы">Методы</button>
+          </div>
+          
+          <div id="glossary-matches-counter" class="glossary-counter-text">
+            Найдено терминов: 25
+          </div>
         </div>
 
         <!-- Glossary Grid -->
@@ -223,6 +298,14 @@
         </div>
       </section>
     </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Психогенетика • Интерактивный тренажер тестов и ключевых понятий</p>
+      <div class="footer-links">
+        <span class="footer-kbd-note">💡 Горячие клавиши: <kbd>1</kbd>..<kbd>4</kbd> — выбор ответа, <kbd>Enter</kbd> — далее</span>
+      </div>
+    </footer>
   </div>
 
   <!-- Scripts -->

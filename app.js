@@ -1,8 +1,11 @@
 // Логика работы интерактивного веб-тренажера по психогенетике
 // Поддерживает:
-// 1. Тест с выбором ответа (choice)
-// 2. Открытый ответ с вводом термина/числа (open)
+// 1. Тест с выбором ответа (choice) + горячие клавиши 1..4
+// 2. Открытый ответ с вводом термина/числа (open) + подсказка
 // 3. Вопросы на соответствие 1А 2Б 3В 4Г (matching)
+// 4. Синтезированные звуковые эффекты (Web Audio API)
+// 5. Живая статистика сессии и серий ответов
+// 6. Интерактивная шпаргалка и поиск
 
 const GLOSSARY_TERMS = [
   {
@@ -38,7 +41,7 @@ const GLOSSARY_TERMS = [
   {
     term: "Фенотип",
     badge: "Определение",
-    desc: "Совокупность всех наблюдаемых и измеряемых свойств организма (анатомических, физиологических, биохимических, психологических и поведенческих). Формируется в ходе онтогенеза как результат реализации генотипа в конкретных условиях окружающей среды: Фенотип = Генотип + Среда + Генотип-средовые эффекты."
+    desc: "Совокупность всех наблюдаемых и измеряемых свойств организма (анатомических, физиологических, биохимических, психологических и поведенческих). Формируется в онтогенезе: Фенотип = Генотип + Среда + Генотип-средовые эффекты (G×E)."
   },
   {
     term: "Кариотип",
@@ -72,27 +75,27 @@ const GLOSSARY_TERMS = [
   },
   {
     term: "Качественные признаки",
-    badge: "Признаки",
+    badge: "Генетика",
     desc: "Дискретные признаки, определяемые описательным путем (по принципу «есть / нет» или альтернативных категорий): группа крови, цвет глаз, форма мочки уха."
   },
   {
     term: "Количественные признаки",
-    badge: "Признаки",
+    badge: "Генетика",
     desc: "Непрерывные признаки, требующие измерения и имеющие континуум выраженности (рост, масса, уровень IQ, показатели экстраверсии и нейротизма). Большинство психологических признаков — количественные."
   },
   {
     term: "Полимерия",
-    badge: "Взаимодействие",
+    badge: "Генетика",
     desc: "Тип взаимодействия неаллельных генов, при котором несколько генов аддитивно (суммарно) усиливают выраженность одного количественного признака (интеллект, рост, цвет кожи)."
   },
   {
     term: "Эпистаз",
-    badge: "Взаимодействие",
+    badge: "Генетика",
     desc: "Подавление фенотипического проявления гена одного локуса неаллельным геном другого локуса (геном-супрессором / ингибитором)."
   },
   {
     term: "Кодоминирование",
-    badge: "Взаимодействие",
+    badge: "Генетика",
     desc: "Форма взаимодействия аллелей одного гена, при которой у гетерозиготы одновременно и полно выражаются оба продукта (пример: IV группа крови AB, где экспрессируются и IA, и IB)."
   },
   {
@@ -107,38 +110,28 @@ const GLOSSARY_TERMS = [
   },
   {
     term: "Генотип-средовое взаимодействие (G×E)",
-    badge: "Эффекты",
+    badge: "Среда",
     desc: "Зависимость проявления генотипа от внешней среды: один и тот же генотип в разных средах дает разные фенотипы (опыты Трайона с «умными» и «глупыми» крысами в обогащенной/обедненной средах)."
   },
   {
     term: "Генотип-средовая ковариация",
-    badge: "Эффекты",
+    badge: "Среда",
     desc: "Неслучайное распределение сред между разными генотипами. Делится на 3 типа: пассивная (среда от родителей), реактивная (отклик социума на задатки ребенка), активная (самостоятельный выбор среды индивидом)."
   },
   {
     term: "Ассортативность",
-    badge: "Эффекты",
+    badge: "Среда",
     desc: "Неслучайность заключения браков на основе фенотипического сходства супругов (по уровню образования, интеллекту, социально-экономическому положению)."
   },
   {
     term: "Эпигенетика",
-    badge: "Регуляция",
+    badge: "Определение",
     desc: "Изменения активности и экспрессии генов, передающиеся при делении клеток, происходящие без изменения самой нуклеотидной последовательности ДНК (метилирование ДНК, ацетилирование гистонов)."
   },
   {
     term: "Стресс-реализующая система (САС)",
-    badge: "Стресс",
+    badge: "Определение",
     desc: "Симпато-адреналовая система, мгновенно мобилизующая организм при стресс-сигнале: выброс адреналина и норадреналина, усиление кровотока и энергообмена."
-  },
-  {
-    term: "Стресс-лимитирующая система",
-    badge: "Стресс",
-    desc: "Система защиты от патологического перевозбуждения стресс-реакции: медиаторы ГАМК, серотонин, эндорфины, антиоксиданты."
-  },
-  {
-    term: "Модель Клонингера",
-    badge: "Личность",
-    desc: "Психобиологическая модель темперамента: Поиск новизны (дофаминергическая система), Избегание вреда (серотонинергическая), Зависимость от награды (норадренергическая)."
   },
   {
     term: "GWAS",
@@ -147,7 +140,79 @@ const GLOSSARY_TERMS = [
   }
 ];
 
-// Состояние приложения
+// ----------------- ЗВУКОВЫЕ ЭФФЕКТЫ (Web Audio API) -----------------
+const SoundFX = {
+  enabled: localStorage.getItem('psy_sound_enabled') !== 'false',
+  audioCtx: null,
+
+  init() {
+    if (!this.audioCtx && (window.AudioContext || window.webkitAudioContext)) {
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  },
+
+  playCorrect() {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.audioCtx) return;
+    try {
+      const now = this.audioCtx.currentTime;
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now); // C5
+      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.08); // E5
+      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.16); // G5
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } catch(e) {}
+  },
+
+  playWrong() {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.audioCtx) return;
+    try {
+      const now = this.audioCtx.currentTime;
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(220, now); // A3
+      osc.frequency.exponentialRampToValueAtTime(164.81, now + 0.16); // E3
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.24);
+    } catch(e) {}
+  },
+
+  playClick() {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.audioCtx) return;
+    try {
+      const now = this.audioCtx.currentTime;
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(480, now);
+      gain.gain.setValueAtTime(0.04, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.06);
+    } catch(e) {}
+  }
+};
+
+// ----------------- СОСТОЯНИЕ ПРИЛОЖЕНИЯ -----------------
 const QuizState = {
   allQuestions: [...QUESTIONS_DATA],
   filteredPool: [...QUESTIONS_DATA],
@@ -158,23 +223,33 @@ const QuizState = {
   isAnswered: false,
   userAnswers: [],
   seenQuestionIds: new Set(),
-  mistakesPool: []
+  mistakesPool: [],
+
+  // Сессионная статистика
+  sessionAnsweredCount: 0,
+  sessionCorrectCount: 0,
+  currentStreak: 0
 };
 
 // DOM Элементы
 const dom = {
   themeToggleBtn: document.getElementById('theme-toggle-btn'),
   themeIcon: document.getElementById('theme-icon'),
-  themeText: document.getElementById('theme-text'),
+  soundToggleBtn: document.getElementById('sound-toggle-btn'),
+  soundIcon: document.getElementById('sound-icon'),
+  statsAccVal: document.getElementById('stats-acc-val'),
+  statsStreakVal: document.getElementById('stats-streak-val'),
+
   tabBtnQuiz: document.getElementById('tab-btn-quiz'),
   tabBtnGlossary: document.getElementById('tab-btn-glossary'),
   quizView: document.getElementById('quiz-view'),
   glossaryView: document.getElementById('glossary-view'),
 
-  // Filters
+  // Filters & Quick Actions
   categorySelect: document.getElementById('category-filter-select'),
   typeSelect: document.getElementById('type-filter-select'),
   modeSelect: document.getElementById('quiz-mode-select'),
+  quickBlitzBtn: document.getElementById('quick-blitz-btn'),
   poolCounterBadge: document.getElementById('pool-counter-badge'),
 
   // Quiz Card
@@ -187,15 +262,18 @@ const dom = {
   dynamicQuestionBody: document.getElementById('dynamic-question-body'),
   explanationBoxCard: document.getElementById('explanation-box-card'),
   explanationTextContent: document.getElementById('explanation-text-content'),
+  findInGlossaryBtn: document.getElementById('find-in-glossary-btn'),
   skipQuestionBtn: document.getElementById('skip-question-btn'),
   nextQuestionBtn: document.getElementById('next-question-btn'),
 
   // Result Screen
   resultScreenContainer: document.getElementById('result-screen-container'),
+  scoreRingFill: document.getElementById('score-ring-fill'),
   resultScoreNum: document.getElementById('result-score-num'),
   resultScoreTotal: document.getElementById('result-score-total'),
   resultVerdictTitle: document.getElementById('result-verdict-title'),
   resultVerdictDesc: document.getElementById('result-verdict-desc'),
+  resultCategoriesBreakdown: document.getElementById('result-categories-breakdown'),
   retryNewRandomBtn: document.getElementById('retry-new-random-btn'),
   reviewMistakesBtn: document.getElementById('review-mistakes-btn'),
   mistakesCountBadge: document.getElementById('mistakes-count-badge'),
@@ -205,89 +283,120 @@ const dom = {
 
   // Glossary
   glossarySearchInput: document.getElementById('glossary-search-input'),
+  clearSearchBtn: document.getElementById('clear-search-btn'),
+  glossaryMatchesCounter: document.getElementById('glossary-matches-counter'),
   glossaryGridContainer: document.getElementById('glossary-grid-container'),
   confettiCanvas: document.getElementById('confetti-canvas')
 };
 
 function init() {
   setupTheme();
+  setupSound();
   setupEventListeners();
+  setupKeyboardShortcuts();
   renderGlossary(GLOSSARY_TERMS);
   filterPool();
   startNewQuizRound();
 }
 
-// ----------------- ТЕМА И НАВИГАЦИЯ -----------------
+// ----------------- ТЕМА И ЗВУК -----------------
 function setupTheme() {
   const savedTheme = localStorage.getItem('psy_quiz_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
-  updateThemeButton(savedTheme);
+  updateThemeIcon(savedTheme);
 
   dom.themeToggleBtn.addEventListener('click', () => {
+    SoundFX.playClick();
     const currentTheme = document.documentElement.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('psy_quiz_theme', newTheme);
-    updateThemeButton(newTheme);
+    updateThemeIcon(newTheme);
   });
 }
 
-function updateThemeButton(theme) {
-  if (theme === 'dark') {
-    dom.themeIcon.textContent = '🌙';
-    dom.themeText.textContent = 'Темная';
-  } else {
-    dom.themeIcon.textContent = '☀️';
-    dom.themeText.textContent = 'Светлая';
-  }
+function updateThemeIcon(theme) {
+  dom.themeIcon.textContent = (theme === 'dark') ? '🌙' : '☀️';
 }
 
-function setupEventListeners() {
-  // LAN Share button
-  const lanBtn = document.getElementById('lan-share-btn');
-  if (lanBtn) {
-    lanBtn.addEventListener('click', () => {
-      const url = 'http://192.168.31.210:8080';
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url).then(() => {
-          const orig = lanBtn.innerHTML;
-          lanBtn.innerHTML = '<span>✅</span> Адрес скопирован!';
-          setTimeout(() => { lanBtn.innerHTML = orig; }, 2000);
-        }).catch(() => {
-          prompt('Адрес для устройств в локальной сети (Wi-Fi):', url);
-        });
-      } else {
-        prompt('Адрес для устройств в локальной сети (Wi-Fi):', url);
-      }
-    });
+function setupSound() {
+  updateSoundIcon();
+  dom.soundToggleBtn.addEventListener('click', () => {
+    SoundFX.enabled = !SoundFX.enabled;
+    localStorage.setItem('psy_sound_enabled', SoundFX.enabled);
+    updateSoundIcon();
+    if (SoundFX.enabled) SoundFX.playClick();
+  });
+}
+
+function updateSoundIcon() {
+  dom.soundIcon.textContent = SoundFX.enabled ? '🔊' : '🔇';
+  dom.soundToggleBtn.title = SoundFX.enabled ? 'Звук включен' : 'Звук выключен';
+}
+
+function updateSessionStats(isCorrect) {
+  QuizState.sessionAnsweredCount++;
+  if (isCorrect) {
+    QuizState.sessionCorrectCount++;
+    QuizState.currentStreak++;
+  } else {
+    QuizState.currentStreak = 0;
   }
 
+  const accPercent = Math.round((QuizState.sessionCorrectCount / QuizState.sessionAnsweredCount) * 100);
+  dom.statsAccVal.textContent = `${accPercent}%`;
+  dom.statsStreakVal.textContent = QuizState.currentStreak;
+}
+
+// ----------------- СЛУШАТЕЛИ СОБЫТИЙ -----------------
+function setupEventListeners() {
   // Tabs
-  dom.tabBtnQuiz.addEventListener('click', () => switchTab('quiz'));
-  dom.tabBtnGlossary.addEventListener('click', () => switchTab('glossary'));
+  dom.tabBtnQuiz.addEventListener('click', () => { SoundFX.playClick(); switchTab('quiz'); });
+  dom.tabBtnGlossary.addEventListener('click', () => { SoundFX.playClick(); switchTab('glossary'); });
 
   // Filters
   dom.categorySelect.addEventListener('change', () => {
+    SoundFX.playClick();
     filterPool();
     startNewQuizRound();
   });
 
   if (dom.typeSelect) {
     dom.typeSelect.addEventListener('change', () => {
+      SoundFX.playClick();
       filterPool();
       startNewQuizRound();
     });
   }
 
   dom.modeSelect.addEventListener('change', () => {
+    SoundFX.playClick();
     startNewQuizRound();
   });
 
-  // Quiz Buttons
-  dom.nextQuestionBtn.addEventListener('click', onNextQuestion);
-  dom.skipQuestionBtn.addEventListener('click', onSkipQuestion);
-  dom.retryNewRandomBtn.addEventListener('click', startNewQuizRound);
+  // Quick Action Buttons
+  dom.quickBlitzBtn.addEventListener('click', () => {
+    SoundFX.playClick();
+    startNewQuizRound();
+  });
+
+  dom.nextQuestionBtn.addEventListener('click', () => {
+    SoundFX.playClick();
+    onNextQuestion();
+  });
+
+  dom.skipQuestionBtn.addEventListener('click', () => {
+    SoundFX.playClick();
+    onSkipQuestion();
+  });
+
+  dom.retryNewRandomBtn.addEventListener('click', () => {
+    SoundFX.playClick();
+    startNewQuizRound();
+  });
+
   dom.resetSessionBtn.addEventListener('click', () => {
+    SoundFX.playClick();
     dom.categorySelect.value = 'all';
     if (dom.typeSelect) dom.typeSelect.value = 'all';
     dom.modeSelect.value = '5';
@@ -296,16 +405,105 @@ function setupEventListeners() {
     startNewQuizRound();
   });
 
-  dom.reviewMistakesBtn.addEventListener('click', startMistakesReviewRound);
+  dom.reviewMistakesBtn.addEventListener('click', () => {
+    SoundFX.playClick();
+    startMistakesReviewRound();
+  });
 
-  // Glossary Search
+  // Jump to Glossary from Question
+  dom.findInGlossaryBtn.addEventListener('click', () => {
+    SoundFX.playClick();
+    const q = QuizState.currentRoundQuestions[QuizState.currentIndex];
+    switchTab('glossary');
+    let searchWord = '';
+    if (q.type === 'open' && q.canonicalAnswer) {
+      searchWord = q.canonicalAnswer.split(' ')[0];
+    } else if (q.type === 'matching' && q.leftItems && q.leftItems.length) {
+      searchWord = q.leftItems[0].text;
+    } else {
+      searchWord = q.question.replace(/[«»"]/g, '').split(' ')[0] || '';
+    }
+    dom.glossarySearchInput.value = searchWord;
+    handleGlossarySearch(searchWord);
+  });
+
+  // Glossary Search & Category Filter Pills
   dom.glossarySearchInput.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase().trim();
-    const filtered = GLOSSARY_TERMS.filter(item => 
-      item.term.toLowerCase().includes(query) || 
-      item.desc.toLowerCase().includes(query)
-    );
-    renderGlossary(filtered);
+    handleGlossarySearch(e.target.value);
+  });
+
+  dom.clearSearchBtn.addEventListener('click', () => {
+    dom.glossarySearchInput.value = '';
+    handleGlossarySearch('');
+    dom.glossarySearchInput.focus();
+  });
+
+  const catBtns = document.querySelectorAll('.gloss-cat-btn');
+  catBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      SoundFX.playClick();
+      catBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterGlossaryByCategory(btn.getAttribute('data-cat'));
+    });
+  });
+
+  // Cheat Sheet Card Clicks
+  const cheatBoxes = document.querySelectorAll('.cheat-box');
+  cheatBoxes.forEach(box => {
+    box.addEventListener('click', () => {
+      SoundFX.playClick();
+      const termName = box.getAttribute('data-term') || '';
+      dom.glossarySearchInput.value = termName;
+      handleGlossarySearch(termName);
+      dom.glossarySearchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+}
+
+// ----------------- ГОРЯЧИЕ КЛАВИШИ -----------------
+function setupKeyboardShortcuts() {
+  window.addEventListener('keydown', (e) => {
+    // Не перехватываем, если пользователь вводит текст в инпутах
+    const isInputActive = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
+    
+    // Если вопрос открытый и активен инпут — Enter обрабатывается самим инпутом
+    if (isInputActive && e.key !== 'Escape') {
+      return;
+    }
+
+    // Если тест не отображается
+    if (dom.quizView.style.display === 'none' || dom.quizCardContainer.style.display === 'none') {
+      return;
+    }
+
+    const q = QuizState.currentRoundQuestions[QuizState.currentIndex];
+    if (!q) return;
+
+    // Когда ответ уже дан: Enter или Space переходит к следующему
+    if (QuizState.isAnswered) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        SoundFX.playClick();
+        onNextQuestion();
+      }
+      return;
+    }
+
+    // Выбор вариантов по 1, 2, 3, 4 для choice
+    if (q.type === 'choice' || !q.type) {
+      if (e.key === '1') { e.preventDefault(); selectChoiceOption(0); }
+      else if (e.key === '2') { e.preventDefault(); selectChoiceOption(1); }
+      else if (e.key === '3') { e.preventDefault(); selectChoiceOption(2); }
+      else if (e.key === '4') { e.preventDefault(); selectChoiceOption(3); }
+    }
+
+    // Escape для пропуска
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      SoundFX.playClick();
+      onSkipQuestion();
+    }
   });
 }
 
@@ -402,16 +600,19 @@ function renderCurrentQuestion() {
   if (dom.questionTypeBadge) {
     if (qType === 'matching') {
       dom.questionTypeBadge.textContent = '🧩 Сопоставление';
+      dom.questionTypeBadge.className = 'question-badge type-badge';
       dom.questionTypeBadge.style.color = 'var(--accent-purple)';
       dom.questionTypeBadge.style.background = 'rgba(168, 85, 247, 0.15)';
       dom.questionTypeBadge.style.borderColor = 'rgba(168, 85, 247, 0.3)';
     } else if (qType === 'open') {
       dom.questionTypeBadge.textContent = '✍️ Открытый ответ';
+      dom.questionTypeBadge.className = 'question-badge type-badge';
       dom.questionTypeBadge.style.color = 'var(--accent-emerald)';
       dom.questionTypeBadge.style.background = 'rgba(16, 185, 129, 0.15)';
       dom.questionTypeBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
     } else {
       dom.questionTypeBadge.textContent = '🔘 Выбор ответа';
+      dom.questionTypeBadge.className = 'question-badge type-badge';
       dom.questionTypeBadge.style.color = 'var(--accent-cyan)';
       dom.questionTypeBadge.style.background = 'rgba(6, 182, 212, 0.15)';
       dom.questionTypeBadge.style.borderColor = 'rgba(6, 182, 212, 0.3)';
@@ -441,7 +642,7 @@ function renderCurrentQuestion() {
   dom.skipQuestionBtn.style.display = 'inline-flex';
 }
 
-// 1. Рендеринг множественного выбора
+// 1. Множественный выбор
 function renderChoiceQuestion(q) {
   const container = document.createElement('div');
   container.className = 'options-list';
@@ -454,6 +655,7 @@ function renderChoiceQuestion(q) {
     btn.innerHTML = `
       <span class="option-marker">${letters[idx]}</span>
       <span class="option-text">${optText}</span>
+      <span class="option-kbd">[${idx + 1}]</span>
     `;
     btn.addEventListener('click', () => selectChoiceOption(idx));
     container.appendChild(btn);
@@ -471,11 +673,15 @@ function selectChoiceOption(selectedIdx) {
 
   if (isCorrect) {
     QuizState.score++;
+    SoundFX.playCorrect();
   } else {
+    SoundFX.playWrong();
     if (!QuizState.mistakesPool.some(item => item.id === q.id)) {
       QuizState.mistakesPool.push(q);
     }
   }
+
+  updateSessionStats(isCorrect);
 
   QuizState.userAnswers.push({
     question: q,
@@ -498,10 +704,17 @@ function selectChoiceOption(selectedIdx) {
   revealAnswerExplanation(q);
 }
 
-// 2. Рендеринг открытого вопроса
+// 2. Открытый ответ
 function renderOpenQuestion(q) {
   const wrapper = document.createElement('div');
   wrapper.className = 'open-question-wrapper';
+  
+  // Вычисляем подсказку
+  const canon = q.canonicalAnswer || (q.acceptedAnswers ? q.acceptedAnswers[0] : '');
+  const hintLength = canon.length;
+  const firstLetter = canon.charAt(0).toUpperCase();
+  const hintText = `${firstLetter}... (${hintLength} букв)`;
+
   wrapper.innerHTML = `
     <div class="open-input-group">
       <input 
@@ -513,6 +726,10 @@ function renderOpenQuestion(q) {
       >
       <button id="submit-open-btn" class="btn-primary">Ответить</button>
     </div>
+    <div class="open-hint-row">
+      <button id="toggle-hint-btn" class="hint-toggle-btn" type="button">💡 Подсказка</button>
+      <span id="hint-display-box" class="hint-text-box" style="display: none;">${hintText}</span>
+    </div>
     <div id="open-feedback-msg" class="open-feedback-badge"></div>
   `;
 
@@ -520,8 +737,15 @@ function renderOpenQuestion(q) {
 
   const input = wrapper.querySelector('#open-text-input');
   const submitBtn = wrapper.querySelector('#submit-open-btn');
+  const hintBtn = wrapper.querySelector('#toggle-hint-btn');
+  const hintBox = wrapper.querySelector('#hint-display-box');
 
-  setTimeout(() => input.focus(), 50);
+  setTimeout(() => input.focus(), 60);
+
+  hintBtn.addEventListener('click', () => {
+    SoundFX.playClick();
+    hintBox.style.display = hintBox.style.display === 'none' ? 'inline-block' : 'none';
+  });
 
   submitBtn.addEventListener('click', () => handleOpenSubmit(input));
   input.addEventListener('keydown', (e) => {
@@ -548,15 +772,19 @@ function handleOpenSubmit(input) {
 
   if (isCorrect) {
     QuizState.score++;
+    SoundFX.playCorrect();
     input.classList.add('correct');
     feedbackMsg.innerHTML = '<span style="color: var(--accent-emerald);">✓ Абсолютно верно!</span>';
   } else {
+    SoundFX.playWrong();
     input.classList.add('wrong');
     feedbackMsg.innerHTML = `<span style="color: var(--accent-rose);">✗ Неверно. Правильный ответ: <strong>${q.canonicalAnswer}</strong></span>`;
     if (!QuizState.mistakesPool.some(item => item.id === q.id)) {
       QuizState.mistakesPool.push(q);
     }
   }
+
+  updateSessionStats(isCorrect);
 
   QuizState.userAnswers.push({
     question: q,
@@ -569,7 +797,7 @@ function handleOpenSubmit(input) {
   revealAnswerExplanation(q);
 }
 
-// 3. Рендеринг вопроса на соответствие (1А 2Б 3В 4Г)
+// 3. Вопрос на соответствие (1А 2Б 3В 4Г)
 function renderMatchingQuestion(q) {
   const wrapper = document.createElement('div');
   wrapper.className = 'matching-wrapper';
@@ -585,7 +813,7 @@ function renderMatchingQuestion(q) {
       <div class="matching-col">
         <div class="matching-col-header">1..4 Термины:</div>
         ${q.leftItems.map(item => `
-          <div class="matching-item-card">
+          <div class="matching-item-card" data-card-left="${item.id}">
             <strong>${item.id}.</strong> <span>${item.text}</span>
           </div>
         `).join('')}
@@ -593,7 +821,7 @@ function renderMatchingQuestion(q) {
       <div class="matching-col">
         <div class="matching-col-header">А..Г Определения:</div>
         ${q.rightItems.map(item => `
-          <div class="matching-item-card">
+          <div class="matching-item-card" data-card-right="${item.id}">
             <strong>${item.id}.</strong> <span>${item.text}</span>
           </div>
         `).join('')}
@@ -618,7 +846,7 @@ function renderMatchingQuestion(q) {
           </div>
         `).join('')}
       </div>
-      <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+      <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
         <button id="submit-matching-btn" class="btn-primary">
           Проверить сопоставление (1А 2Б 3В 4Г)
         </button>
@@ -636,6 +864,7 @@ function renderMatchingQuestion(q) {
   chipButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       if (QuizState.isAnswered) return;
+      SoundFX.playClick();
       const leftId = btn.getAttribute('data-left-id');
       const rightId = btn.getAttribute('data-right-id');
 
@@ -696,11 +925,15 @@ function renderMatchingQuestion(q) {
 
     if (allCorrect) {
       QuizState.score++;
+      SoundFX.playCorrect();
     } else {
+      SoundFX.playWrong();
       if (!QuizState.mistakesPool.some(item => item.id === q.id)) {
         QuizState.mistakesPool.push(q);
       }
     }
+
+    updateSessionStats(allCorrect);
 
     QuizState.userAnswers.push({
       question: q,
@@ -721,8 +954,8 @@ function revealAnswerExplanation(q) {
   dom.skipQuestionBtn.style.display = 'none';
   dom.nextQuestionBtn.style.display = 'inline-flex';
   dom.nextQuestionBtn.innerHTML = (QuizState.currentIndex + 1 >= QuizState.roundSize)
-    ? 'Завершить тест 🏁'
-    : 'Следующий вопрос <span>→</span>';
+    ? 'Завершить тест 🏁 <kbd class="kbd-hint">[Enter ↵]</kbd>'
+    : 'Следующий вопрос <kbd class="kbd-hint">[Enter ↵]</kbd> <span>→</span>';
 }
 
 function onSkipQuestion() {
@@ -732,6 +965,8 @@ function onSkipQuestion() {
   if (!QuizState.mistakesPool.some(item => item.id === q.id)) {
     QuizState.mistakesPool.push(q);
   }
+
+  updateSessionStats(false);
 
   QuizState.userAnswers.push({
     question: q,
@@ -763,20 +998,36 @@ function finishQuizRound() {
   dom.resultScoreNum.textContent = score;
   dom.resultScoreTotal.textContent = `из ${total}`;
 
+  // Анимация SVG круга
+  const circumference = 314;
+  const offset = circumference - (circumference * percent / 100);
+  dom.scoreRingFill.style.strokeDashoffset = offset;
+
+  if (percent >= 80) {
+    dom.scoreRingFill.style.stroke = 'var(--accent-emerald)';
+  } else if (percent >= 60) {
+    dom.scoreRingFill.style.stroke = 'var(--accent-cyan)';
+  } else {
+    dom.scoreRingFill.style.stroke = 'var(--accent-rose)';
+  }
+
   if (percent === 100) {
     dom.resultVerdictTitle.textContent = 'Превосходно! 100% результат! 🏆';
     dom.resultVerdictDesc.textContent = 'Вы безупречно справились со всеми заданиями раунда (тесты, сопоставления и термины).';
     triggerConfetti();
   } else if (percent >= 80) {
     dom.resultVerdictTitle.textContent = 'Отличный результат! 🌟';
-    dom.resultVerdictDesc.textContent = 'Твердое знание определений и понятий психогенетики.';
+    dom.resultVerdictDesc.textContent = 'Твердое знание определений и ключевых понятий курса психогенетики.';
   } else if (percent >= 60) {
     dom.resultVerdictTitle.textContent = 'Хорошая база! 👍';
-    dom.resultVerdictDesc.textContent = 'Основные термины усвоены. Обратите внимание на ошибки ниже.';
+    dom.resultVerdictDesc.textContent = 'Основные термины усвоены. Обратите внимание на ошибки в списке ниже.';
   } else {
     dom.resultVerdictTitle.textContent = 'Есть над чем поработать 📚';
-    dom.resultVerdictDesc.textContent = 'Рекомендуем повторить ключевые темы во вкладке «Шпаргалка и Определения».';
+    dom.resultVerdictDesc.textContent = 'Рекомендуем повторить ключевые темы во вкладке «Справочник и Термины».';
   }
+
+  // Категориальная разбивка результатов
+  renderCategoryBreakdown();
 
   const wrongAnswersCount = QuizState.userAnswers.filter(a => !a.isCorrect).length;
   if (wrongAnswersCount > 0 && QuizState.mistakesPool.length > 0) {
@@ -789,13 +1040,35 @@ function finishQuizRound() {
   renderRoundReview();
 }
 
+function renderCategoryBreakdown() {
+  dom.resultCategoriesBreakdown.innerHTML = '';
+  const catStats = {};
+
+  QuizState.userAnswers.forEach(ans => {
+    const cat = ans.question.categoryTitle || 'Общее';
+    if (!catStats[cat]) catStats[cat] = { total: 0, correct: 0 };
+    catStats[cat].total++;
+    if (ans.isCorrect) catStats[cat].correct++;
+  });
+
+  Object.keys(catStats).forEach(cat => {
+    const s = catStats[cat];
+    const pct = Math.round((s.correct / s.total) * 100);
+    const pill = document.createElement('span');
+    pill.className = 'cat-breakdown-pill';
+    const colorStyle = pct >= 80 ? 'color: var(--accent-emerald);' : (pct >= 50 ? 'color: var(--accent-cyan);' : 'color: var(--accent-rose);');
+    pill.innerHTML = `<strong>${cat}:</strong> <span style="${colorStyle}">${s.correct}/${s.total} (${pct}%)</span>`;
+    dom.resultCategoriesBreakdown.appendChild(pill);
+  });
+}
+
 function renderRoundReview() {
   dom.reviewItemsContainer.innerHTML = '';
 
   QuizState.userAnswers.forEach((ans, idx) => {
     const q = ans.question;
     const item = document.createElement('div');
-    item.className = 'review-item';
+    item.className = `review-item ${ans.isCorrect ? 'is-correct' : 'is-wrong'}`;
 
     const statusBadge = ans.isCorrect 
       ? '<span style="color: var(--accent-emerald);">✓ Верно</span>' 
@@ -833,13 +1106,15 @@ function renderRoundReview() {
   });
 }
 
+// ----------------- СПРАВОЧНИК / ГЛОССАРИЙ -----------------
 function renderGlossary(termsList) {
   dom.glossaryGridContainer.innerHTML = '';
+  dom.glossaryMatchesCounter.textContent = `Найдено терминов: ${termsList.length}`;
 
   if (termsList.length === 0) {
     dom.glossaryGridContainer.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 30px;">
-        Термины по данному запросу не найдены. Попробуйте другой запрос.
+      <div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 40px;">
+        Термины по данному запросу не найдены. Попробуйте другой запрос или очистите поиск.
       </div>
     `;
     return;
@@ -859,6 +1134,32 @@ function renderGlossary(termsList) {
   });
 }
 
+function handleGlossarySearch(query) {
+  const cleanQ = query.toLowerCase().trim();
+  dom.clearSearchBtn.style.display = cleanQ ? 'block' : 'none';
+
+  const activeCatBtn = document.querySelector('.gloss-cat-btn.active');
+  const activeCat = activeCatBtn ? activeCatBtn.getAttribute('data-cat') : 'all';
+
+  const filtered = GLOSSARY_TERMS.filter(item => {
+    const matchCat = (activeCat === 'all') || (item.badge === activeCat);
+    const matchText = item.term.toLowerCase().includes(cleanQ) || item.desc.toLowerCase().includes(cleanQ);
+    return matchCat && matchText;
+  });
+
+  renderGlossary(filtered);
+}
+
+function filterGlossaryByCategory(category) {
+  const searchVal = dom.glossarySearchInput.value.toLowerCase().trim();
+  const filtered = GLOSSARY_TERMS.filter(item => {
+    const matchCat = (category === 'all') || (item.badge === category);
+    const matchText = !searchVal || item.term.toLowerCase().includes(searchVal) || item.desc.toLowerCase().includes(searchVal);
+    return matchCat && matchText;
+  });
+  renderGlossary(filtered);
+}
+
 function cleanAnswerString(str) {
   return String(str || '')
     .trim()
@@ -875,6 +1176,7 @@ function shuffleArray(arr) {
   }
 }
 
+// ----------------- КОНФЕТТИ -----------------
 function triggerConfetti() {
   const canvas = dom.confettiCanvas;
   if (!canvas) return;
