@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Психогенетика | Веб-тренажер определений и тестов</title>
+  <meta name="description" content="Интерактивный веб-тренажер по психогенетике для магистрантов: тесты по 5 вопросов со случайным выбором, изучение ключевых определений, генома, фенотипа и истории науки.">
+  <meta name="keywords" content="психогенетика, геном, фенотип, генотип, кариотип, тесты психогенетика, магистратура 2026">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="app-wrapper">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-icon">🧬</span>
+        <div>
+          <h1 id="app-heading">Психогенетика: Тренажер</h1>
+          <span class="brand-badge">Магистратура • 2026</span>
+        </div>
+      </div>
+      
+      <div class="header-controls">
+        <button id="lan-share-btn" class="nav-btn" title="Открыть на смартфоне в локальной сети">
+          <span>📱</span> LAN: 192.168.31.210:8080
+        </button>
+        <button id="theme-toggle-btn" class="theme-toggle-btn" title="Переключить тему">
+          <span id="theme-icon">🌙</span>
+          <span id="theme-text">Темная</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs-nav" aria-label="Вкладки тренажера">
+      <button id="tab-btn-quiz" class="tab-btn active">
+        <span>🎯</span> Тест-тренажер (5 вопросов)
+      </button>
+      <button id="tab-btn-glossary" class="tab-btn">
+        <span>📖</span> Шпаргалка и Определения
+      </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main>
+      <!-- QUIZ VIEW -->
+      <section id="quiz-view" class="view-section">
+        <!-- Control bar -->
+        <div class="quiz-controls-bar">
+          <div class="filter-group">
+            <label for="category-filter-select" class="filter-label">Тема:</label>
+            <select id="category-filter-select" class="filter-select">
+              <option value="all">Все темы курса (65+ вопросов)</option>
+              <option value="definitions">Определения и термины (Геном, Фенотип...)</option>
+              <option value="history_basics">Введение и история (1865 г., Гальтон...)</option>
+              <option value="molecular">Молекулярные основы (ДНК, РНК, код...)</option>
+              <option value="genetics_laws">Законы Менделя и взаимодействия генов</option>
+              <option value="environment">Среда и генотип-средовые эффекты</option>
+              <option value="regulation_stress">Регуляция генов и стресс</option>
+              <option value="methods">Методы психогенетики (близнецы, GWAS...)</option>
+              <option value="personality_iq">Личность, интеллект, нейрохимия</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="type-filter-select" class="filter-label">Формат:</label>
+            <select id="type-filter-select" class="filter-select">
+              <option value="all">Все форматы (95+ вопр.)</option>
+              <option value="matching">🧩 Сопоставление (1А 2Б 3В 4Г)</option>
+              <option value="open">✍️ Открытый ответ (термин)</option>
+              <option value="choice">🔘 Выбор 1 из 4</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="quiz-mode-select" class="filter-label">Режим:</label>
+            <select id="quiz-mode-select" class="filter-select">
+              <option value="5">Экспресс: 5 вопросов</option>
+              <option value="10">Марафон: 10 вопросов</option>
+              <option value="all">Все вопросы пула</option>
+            </select>
+          </div>
+
+          <div class="stats-pill" id="pool-counter-badge">
+            В пуле: 95 вопросов
+          </div>
+        </div>
+
+        <!-- Quiz Card Container -->
+        <div id="quiz-card-container" class="quiz-card">
+          <!-- Question header -->
+          <div class="quiz-card-header">
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <span id="question-type-badge" class="question-badge" style="background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); border-color: rgba(6, 182, 212, 0.3);">Формат</span>
+              <span id="question-category-badge" class="question-badge">Категория</span>
+            </div>
+            <span id="question-counter-display" class="question-counter">Вопрос 1 из 5</span>
+          </div>
+
+          <!-- Progress bar -->
+          <div class="progress-container">
+            <div id="quiz-progress-bar" class="progress-bar-fill"></div>
+          </div>
+
+          <!-- Question Text -->
+          <h2 id="question-title-text" class="question-title">Загрузка вопроса...</h2>
+
+          <!-- Dynamic Question Body (Choice / Open / Matching) -->
+          <div id="dynamic-question-body">
+            <div id="options-list-container" class="options-list">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Explanation Box -->
+          <div id="explanation-box-card" class="explanation-box">
+            <div class="explanation-header">
+              <span>💡</span> Пояснение и определение
+            </div>
+            <p id="explanation-text-content" class="explanation-text"></p>
+          </div>
+
+          <!-- Card Footer -->
+          <div class="quiz-card-footer">
+            <button id="skip-question-btn" class="btn-secondary">Пропустить</button>
+            <button id="next-question-btn" class="btn-primary" style="display: none;">
+              Следующий вопрос <span>→</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Round Result Screen -->
+        <div id="result-screen-container" class="quiz-card result-screen">
+          <div class="score-badge-circle">
+            <span id="result-score-num" class="score-number">5</span>
+            <span id="result-score-total" class="score-total">из 5</span>
+          </div>
+          
+          <h2 id="result-verdict-title" class="result-title">Отличный результат! 🎉</h2>
+          <p id="result-verdict-desc" class="result-subtitle">
+            Вы превосходно знаете базовые термины и концепции психогенетики.
+          </p>
+
+          <div class="result-actions">
+            <button id="retry-new-random-btn" class="btn-primary">
+              🎲 Следующие 5 случайных вопросов
+            </button>
+            <button id="review-mistakes-btn" class="btn-secondary" style="display: none;">
+              🔄 Разобрать ошибки (<span id="mistakes-count-badge">0</span>)
+            </button>
+            <button id="reset-session-btn" class="btn-secondary">
+              Сбросить фильтры
+            </button>
+          </div>
+
+          <!-- Round Question Review -->
+          <div id="round-review-list" class="review-section">
+            <h3><span>📋</span> Обзор ответов раунда:</h3>
+            <div id="review-items-container">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GLOSSARY VIEW -->
+      <section id="glossary-view" class="glossary-screen">
+        <!-- Visual Reference Banner (Ответы на ключевые вопросы) -->
+        <div class="cheat-sheet-banner">
+          <h2 class="cheat-sheet-title">
+            <span>🧬</span> Ключевой базис курса: Что к чему относится?
+          </h2>
+          <div class="cheat-sheet-grid">
+            <div class="cheat-box">
+              <strong>📅 1865 год</strong>
+              <p>Год рождения психогенетики: выход книги Ф. Гальтона «Наследственный талант и характер». (1900 г. — официальная генетика Менделя; 1909 г. — термины Иоганнсена).</p>
+            </div>
+            <div class="cheat-box">
+              <strong>🔬 ГЕНОМ</strong>
+              <p>Полная совокупность наследственного материала клетки (23 пары хромосом ядра + кольцевая митохондриальная ДНК). ~1,5% кодирует белки.</p>
+            </div>
+            <div class="cheat-box">
+              <strong>🧬 ГЕНОТИП</strong>
+              <p>Индивидуальная генетическая конституция (набор генов и аллелей), возникает при зачатии и стабилен всю жизнь.</p>
+            </div>
+            <div class="cheat-box">
+              <strong>👤 ФЕНОТИП</strong>
+              <p>Всё наблюдаемое: биохимия, морфология, IQ, темперамент, поведение. Результат: <em>Фенотип = Генотип + Среда + Взаимодействие</em>.</p>
+            </div>
+            <div class="cheat-box">
+              <strong>📊 КАРИОТИП</strong>
+              <p>Хромосомный паспорт вида: 46 хромосом (22 пары аутосом + 1 пара половых XX/XY).</p>
+            </div>
+            <div class="cheat-box">
+              <strong>🌿 СРЕДА (G × E)</strong>
+              <p><strong>Разделенная:</strong> общесемейная (сходство).<br><strong>Неразделенная:</strong> индивидуальный опыт (различия).<br><strong>Ковариация:</strong> пассивная, реактивная, активная.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input 
+            type="text" 
+            id="glossary-search-input" 
+            class="search-input" 
+            placeholder="Поиск по терминам и определениям (например: геном, фенотип, локус, Гальтон, стресс)..."
+          >
+        </div>
+
+        <!-- Glossary Grid -->
+        <div id="glossary-grid-container" class="glossary-grid">
+          <!-- Rendered dynamically from questions & key terms -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="questions.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
