@@ -18,13 +18,13 @@
   <canvas id="confetti-canvas"></canvas>
 
   <div class="app-wrapper">
-    <!-- Header (No LAN, No Magistratura) -->
+    <!-- Header -->
     <header class="app-header">
       <div class="brand">
-        <span class="brand-icon">🧬</span>
+        <span class="brand-icon" id="brand-icon">🧬</span>
         <div class="brand-info">
           <h1 id="app-heading">Психогенетика</h1>
-          <p class="brand-subtitle">Интерактивный тренажер тестов и понятий</p>
+          <p class="brand-subtitle" id="brand-subtitle">Интерактивный тренажер тестов и понятий</p>
         </div>
       </div>
       
@@ -42,6 +42,23 @@
         </button>
       </div>
     </header>
+
+    <!-- Discipline Switcher -->
+    <div class="discipline-switcher-container">
+      <span class="discipline-switcher-label">Дисциплина:</span>
+      <div class="discipline-segmented-control" role="tablist" aria-label="Выбор дисциплины">
+        <button id="disc-btn-psychogenetics" class="disc-btn active" role="tab" aria-selected="true" data-discipline="psychogenetics" type="button">
+          <span class="disc-icon">🧬</span>
+          <span class="disc-name">Психогенетика</span>
+          <span class="disc-badge" id="disc-badge-psychogenetics">95 вопр.</span>
+        </button>
+        <button id="disc-btn-experimental-design" class="disc-btn" role="tab" aria-selected="false" data-discipline="experimental_design" type="button">
+          <span class="disc-icon">📊</span>
+          <span class="disc-name">Дизайн исследования</span>
+          <span class="disc-badge" id="disc-badge-design">200 вопр.</span>
+        </button>
+      </div>
+    </div>
 
     <!-- Navigation Tabs -->
     <nav class="tabs-nav" aria-label="Вкладки тренажера">
@@ -213,61 +230,13 @@
         <!-- Visual Reference Banner (Ответы на ключевые вопросы) -->
         <div class="cheat-sheet-banner">
           <div class="cheat-sheet-header">
-            <h2 class="cheat-sheet-title">
+            <h2 class="cheat-sheet-title" id="cheat-sheet-title">
               <span>🧬</span> Ключевой базис курса: Что к чему относится?
             </h2>
             <span class="cheat-sheet-badge">Экспресс-шпаргалка</span>
           </div>
-          <div class="cheat-sheet-grid">
-            <div class="cheat-box" data-term="1865 год психогенетика Гальтон">
-              <div class="cheat-box-top">
-                <strong>📅 1865 год — Психогенетика</strong>
-                <span class="cheat-tag">История</span>
-              </div>
-              <p><strong>Зарождение ПСИХОГЕНЕТИКИ:</strong> выход первой работы Ф. Гальтона «Наследственный талант и характер» о роли наследственности в психических свойствах. (1869 г. — книга «Наследственный гений», 1876 г. — метод близнецов, 1883 г. — евгеника).</p>
-            </div>
-            <div class="cheat-box" data-term="1900 год общая генетика Мендель">
-              <div class="cheat-box-top">
-                <strong>🌱 1900 год — Общая генетика</strong>
-                <span class="cheat-tag">История</span>
-              </div>
-              <p><strong>Официальное рождение ОБЩЕЙ ГЕНЕТИКИ:</strong> переоткрытие законов Грегора Менделя (К. Корренс, Э. Чермак, Х. де Фриз). В 1909 г. — термины Иоганнсена («ген», «генотип», «фенотип»); в 1960 г. — оформление генетики поведения (BGA).</p>
-            </div>
-            <div class="cheat-box" data-term="Геном">
-              <div class="cheat-box-top">
-                <strong>🔬 ГЕНОМ</strong>
-                <span class="cheat-tag">Определение</span>
-              </div>
-              <p>Вся совокупность наследственного генетического материала клетки (23 пары хромосом ядра + кольцевая мтДНК). ~1,5% кодирует белки.</p>
-            </div>
-            <div class="cheat-box" data-term="Генотип">
-              <div class="cheat-box-top">
-                <strong>🧬 ГЕНОТИП</strong>
-                <span class="cheat-tag">Определение</span>
-              </div>
-              <p>Индивидуальная генетическая конституция (набор генов и аллелей), возникает при зачатии и стабилен всю жизнь во всех соматических клетках.</p>
-            </div>
-            <div class="cheat-box" data-term="Фенотип">
-              <div class="cheat-box-top">
-                <strong>👤 ФЕНОТИП</strong>
-                <span class="cheat-tag">Определение</span>
-              </div>
-              <p>Все наблюдаемые признаки: биохимия, морфология, IQ, темперамент, поведение. Результат: <em>Фенотип = Генотип + Среда + Взаимодействие (G×E)</em>.</p>
-            </div>
-            <div class="cheat-box" data-term="Кариотип">
-              <div class="cheat-box-top">
-                <strong>📊 КАРИОТИП</strong>
-                <span class="cheat-tag">Определение</span>
-              </div>
-              <p>Хромосомный паспорт вида: 46 хромосом (22 пары аутосом + 1 пара половых XX/XY).</p>
-            </div>
-            <div class="cheat-box" data-term="Среда">
-              <div class="cheat-box-top">
-                <strong>🌿 СРЕДА (G × E)</strong>
-                <span class="cheat-tag">Среда</span>
-              </div>
-              <p><strong>Разделенная:</strong> общесемейная (сходство детей).<br><strong>Неразделенная:</strong> уникальный личный опыт (различия).<br><strong>Ковариация:</strong> пассивная, реактивная, активная.</p>
-            </div>
+          <div class="cheat-sheet-grid" id="cheat-sheet-grid">
+            <!-- Rendered dynamically by JS depending on active discipline -->
           </div>
         </div>
 
@@ -279,19 +248,14 @@
               type="text" 
               id="glossary-search-input" 
               class="search-input" 
-              placeholder="Поиск по терминам и определениям (например: геном, фенотип, локус, Гальтон, стресс)..."
+              placeholder="Поиск по терминам и определениям..."
             >
             <button id="clear-search-btn" class="clear-search-btn" title="Очистить поиск" style="display: none;">✕</button>
           </div>
 
           <!-- Category filter pills -->
-          <div class="glossary-categories-filter">
-            <button class="gloss-cat-btn active" data-cat="all">Все термины</button>
-            <button class="gloss-cat-btn" data-cat="Определение">Определения</button>
-            <button class="gloss-cat-btn" data-cat="История">История</button>
-            <button class="gloss-cat-btn" data-cat="Генетика">Генетика</button>
-            <button class="gloss-cat-btn" data-cat="Среда">Среда</button>
-            <button class="gloss-cat-btn" data-cat="Методы">Методы</button>
+          <div class="glossary-categories-filter" id="glossary-categories-filter">
+            <!-- Rendered dynamically by JS -->
           </div>
           
           <div id="glossary-matches-counter" class="glossary-counter-text">
@@ -308,7 +272,7 @@
 
     <!-- Footer -->
     <footer class="app-footer">
-      <p>Психогенетика • Интерактивный тренажер тестов и ключевых понятий</p>
+      <p id="footer-course-title">Психогенетика • Интерактивный тренажер тестов и ключевых понятий</p>
       <div class="footer-links">
         <span class="footer-kbd-note">💡 Горячие клавиши: <kbd>1</kbd>..<kbd>4</kbd> — выбор ответа, <kbd>Enter</kbd> — далее</span>
       </div>
@@ -317,6 +281,7 @@
 
   <!-- Scripts -->
   <script src="questions.js"></script>
+  <script src="questions_design.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

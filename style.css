@@ -175,6 +175,127 @@ body {
   box-shadow: var(--shadow-glow);
 }
 
+/* ---------------- DISCIPLINE SWITCHER ---------------- */
+.discipline-switcher-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  background: var(--bg-card);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.discipline-switcher-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.discipline-segmented-control {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+  background: var(--bg-secondary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.disc-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.disc-btn:hover:not(.active) {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.disc-btn.active {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border-color: var(--border-glow);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 12px rgba(99, 102, 241, 0.2);
+}
+
+.disc-icon {
+  font-size: 16px;
+}
+
+.disc-badge {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--accent-indigo);
+  font-weight: 700;
+}
+
+.disc-btn.active .disc-badge {
+  background: var(--gradient-brand);
+  color: #fff;
+}
+
+/* Self grading for definition questions */
+.self-grade-container {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.self-grade-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.self-grade-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-emerald);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.self-grade-btn:hover {
+  background: rgba(16, 185, 129, 0.25);
+  transform: translateY(-1px);
+}
+
 /* ---------------- TABS ---------------- */
 .tabs-nav {
   display: flex;
@@ -1359,6 +1480,17 @@ body {
     flex-direction: column;
     align-items: flex-start;
     gap: 14px;
+  }
+  .discipline-switcher-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .discipline-segmented-control {
+    flex-direction: column;
+  }
+  .disc-btn {
+    justify-content: space-between;
   }
   .header-controls {
     width: 100%;

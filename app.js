@@ -1,13 +1,15 @@
-// Логика работы интерактивного веб-тренажера по психогенетике
-// Поддерживает:
-// 1. Тест с выбором ответа (choice) + горячие клавиши 1..4
-// 2. Открытый ответ с вводом термина/числа (open) + подсказка
-// 3. Вопросы на соответствие 1А 2Б 3В 4Г (matching)
-// 4. Синтезированные звуковые эффекты (Web Audio API)
-// 5. Живая статистика сессии и серий ответов
-// 6. Интерактивная шпаргалка и поиск
+// Логика работы интерактивного веб-тренажера
+// Поддерживает две дисциплины:
+// 1. «Психогенетика» (95 вопросов)
+// 2. «Дизайн экспериментально-психологического исследования» (200 вопросов и 45 понятий глоссария: 20 задач на шкалы, 10 на НП/ЗП, схемы, артефакты, планы Кэмпбелла, валидность Готтсданкера, статистика Сидоренко/Гласса, психодиагностика Анастази/Бурлачука, этика РПО/АНРИ, 21 открытое определение)
+//
+// Режимы:
+// - 📝 Письменная работа 19.10 (11 заданий: 2 открытых + 9 тестовых)
+// - Блиц: 5 вопросов
+// - Марафон: 10 вопросов
+// - Все вопросы пула
 
-const GLOSSARY_TERMS = [
+const GLOSSARY_PSYCHOGENETICS_DATA = [
   {
     term: "Психогенетика",
     badge: "Определение",
@@ -140,6 +142,163 @@ const GLOSSARY_TERMS = [
   }
 ];
 
+// ----------------- КОНФИГУРАЦИЯ ДИСЦИПЛИН -----------------
+const DISCIPLINES = {
+  psychogenetics: {
+    id: "psychogenetics",
+    title: "Психогенетика",
+    icon: "🧬",
+    subtitle: "Интерактивный тренажер тестов и понятий",
+    footerText: "Психогенетика • Интерактивный тренажер тестов и ключевых понятий",
+    badgeText: "95 вопр.",
+    questions: (typeof QUESTIONS_DATA !== 'undefined' ? QUESTIONS_DATA : []),
+    glossary: GLOSSARY_PSYCHOGENETICS_DATA,
+    cheatSheetTitle: "🧬 Ключевой базис курса: Что к чему относится?",
+    cheatSheetItems: [
+      {
+        term: "1865 год психогенетика Гальтон",
+        tag: "История",
+        title: "📅 1865 год — Психогенетика",
+        desc: "<strong>Зарождение ПСИХОГЕНЕТИКИ:</strong> выход первой работы Ф. Гальтона «Наследственный талант и характер» о роли наследственности в психических свойствах. (1869 г. — книга «Наследственный гений», 1876 г. — метод близнецов, 1883 г. — евгеника)."
+      },
+      {
+        term: "1900 год общая генетика Мендель",
+        tag: "История",
+        title: "🌱 1900 год — Общая генетика",
+        desc: "<strong>Официальное рождение ОБЩЕЙ ГЕНЕТИКИ:</strong> переоткрытие законов Грегора Менделя (К. Корренс, Э. Чермак, Х. де Фриз). В 1909 г. — термины Иоганнсена («ген», «генотип», «фенотип»); в 1960 г. — оформление генетики поведения (BGA)."
+      },
+      {
+        term: "Геном",
+        tag: "Определение",
+        title: "🔬 ГЕНОМ",
+        desc: "Вся совокупность наследственного генетического материала клетки (23 пары хромосом ядра + кольцевая мтДНК). ~1,5% кодирует белки."
+      },
+      {
+        term: "Генотип",
+        tag: "Определение",
+        title: "🧬 ГЕНОТИП",
+        desc: "Индивидуальная генетическая конституция (набор генов и аллелей), возникает при зачатии и стабилен всю жизнь во всех соматических клетках."
+      },
+      {
+        term: "Фенотип",
+        tag: "Определение",
+        title: "👤 ФЕНОТИП",
+        desc: "Все наблюдаемые признаки: биохимия, морфология, IQ, темперамент, поведение. Результат: <em>Фенотип = Генотип + Среда + Взаимодействие (G×E)</em>."
+      },
+      {
+        term: "Кариотип",
+        tag: "Определение",
+        title: "📊 КАРИОТИП",
+        desc: "Хромосомный паспорт вида: 46 хромосом (22 пары аутосом + 1 пара половых XX/XY)."
+      },
+      {
+        term: "Среда",
+        tag: "Среда",
+        title: "🌿 СРЕДА (G × E)",
+        desc: "<strong>Разделенная:</strong> общесемейная (сходство детей).<br><strong>Неразделенная:</strong> уникальный личный опыт (различия).<br><strong>Ковариация:</strong> пассивная, реактивная, активная."
+      }
+    ],
+    categories: [
+      { value: "all", title: "Все темы курса (95 вопросов)" },
+      { value: "definitions", title: "Определения и термины (Геном, Фенотип...)" },
+      { value: "history_basics", title: "Введение и история (1865 г., Гальтон...)" },
+      { value: "molecular", title: "Молекулярные основы (ДНК, РНК, код...)" },
+      { value: "genetics_laws", title: "Законы Менделя и взаимодействия генов" },
+      { value: "environment", title: "Среда и генотип-средовые эффекты" },
+      { value: "regulation_stress", title: "Регуляция генов и стресс" },
+      { value: "methods", title: "Методы психогенетики (близнецы, GWAS...)" },
+      { value: "personality_iq", title: "Личность, интеллект, нейрохимия" }
+    ],
+    glossaryBadges: ["all", "Определение", "История", "Генетика", "Среда", "Методы"],
+    modes: [
+      { value: "5", title: "Блиц: 5 вопросов", default: true },
+      { value: "10", title: "Марафон: 10 вопросов" },
+      { value: "all", title: "Все вопросы пула" }
+    ]
+  },
+
+  experimental_design: {
+    id: "experimental_design",
+    title: "Дизайн исследования",
+    icon: "📊",
+    subtitle: "Подготовка к письменной работе 19.10 и зачету",
+    footerText: "Дизайн экспериментально-психологического исследования • Тренажер тестов и понятий",
+    badgeText: "200 вопр.",
+    questions: (typeof QUESTIONS_DESIGN_DATA !== 'undefined' ? QUESTIONS_DESIGN_DATA : []),
+    glossary: (typeof GLOSSARY_DESIGN_DATA !== 'undefined' ? GLOSSARY_DESIGN_DATA : []),
+    cheatSheetTitle: "📊 Шпаргалка: Шкалы, Переменные, Наблюдение и Методология",
+    cheatSheetItems: [
+      {
+        term: "Шкалы измерения (по С. Стивенсу)",
+        tag: "Шкалы",
+        title: "📏 Шкалы измерения (Стивенс)",
+        desc: "<strong>Номинативная:</strong> качественные имена (пол, диагноз, номер зачетки, соматотип).<br><strong>Порядковая:</strong> ранги (оценки 2/3/4/5, шкала Лайкерта, тревожность).<br><strong>Интервальная:</strong> равные интервалы, условный 0 (тесты IQ 0-100, °C, календарный год).<br><strong>Отношений:</strong> абсолютный 0 (время реакции, возраст, вес, °K, число ошибок)."
+      },
+      {
+        term: "Независимая переменная (НП)",
+        tag: "Переменные",
+        title: "⚡ Независимая переменная (НП)",
+        desc: "Фактор или условие, целенаправленно варьируемое или контролируемое исследователем (предполагаемая <strong>причина</strong>). Бывает активной (методика, свет, дозировка) или субъектной (пол, возраст, интроверсия)."
+      },
+      {
+        term: "Зависимая переменная (ЗП)",
+        tag: "Переменные",
+        title: "🎯 Зависимая переменная (ЗП)",
+        desc: "Регистрируемый параметр поведения или психики, изменяющийся под действием НП (предполагаемое <strong>следствие</strong>: число ошибок, время прохождения лабиринта, уровень стресса)."
+      },
+      {
+        term: "Метод наблюдения",
+        tag: "Наблюдение",
+        title: "👁️ Метод наблюдения",
+        desc: "Целенаправленное планомерное восприятие без вмешательства в ход процесса.<br><strong>Виды:</strong> включенное/невключенное, открытое/скрытое, полевое/лабораторное, стандартизированное/свободное.<br><strong>Ошибки:</strong> эффект Хоторна (реактивность), эффект ореола (гало)."
+      },
+      {
+        term: "Классификация Б.Г. Ананьева",
+        tag: "Методы",
+        title: "📚 Методы по Б.Г. Ананьеву",
+        desc: "1. <strong>Организационные:</strong> сравнительный, лонгитюдный, комплексный.<br>2. <strong>Эмпирические:</strong> обсервационные, эксперимент, психодиагностика, праксиметрические, биографические.<br>3. <strong>Обработки:</strong> количественные и качественные.<br>4. <strong>Интерпретационные:</strong> генетический и структурный."
+      },
+      {
+        term: "Проблема, Объект, Предмет",
+        tag: "Наука",
+        title: "🔬 Программа исследования",
+        desc: "<strong>Проблема:</strong> противоречие между знанием и незнанием.<br><strong>Объект:</strong> носитель проблемы (люди, группы, процессы).<br><strong>Предмет:</strong> конкретное изучаемое свойство или связь внутри объекта.<br><strong>Гипотеза:</strong> научно обоснованное предположение."
+      },
+      {
+        term: "Выборка и популяция",
+        tag: "Выборка",
+        title: "👥 Выборка и Репрезентативность",
+        desc: "<strong>Генеральная совокупность:</strong> все объекты изучения.<br><strong>Выборка:</strong> эмпирическая группа.<br><strong>Репрезентативность:</strong> способность выборки адекватно воспроизводить характеристики популяции.<br><strong>Стратегии:</strong> рандомизация, стратификация, квоты, снежный ком."
+      }
+    ],
+    categories: [
+      { value: "all", title: "Все темы курса (200 вопросов)" },
+      { value: "scales_tasks", title: "Задачи на шкалы измерения (Семинар 4, 20 задач)" },
+      { value: "variables_tasks", title: "Задачи на переменные: НП и ЗП (Семинар 4, 10 задач)" },
+      { value: "schemes_tasks", title: "Задачи на схемы и планы (Семинары 7 и 9)" },
+      { value: "validity_artifacts_tasks", title: "Задачи на артефакты и валидность (Семинар 8)" },
+      { value: "campbell_plans", title: "Планы экспериментов по Д. Кэмпбеллу" },
+      { value: "gottsdanker_validity", title: "Безупречный эксперимент и валидность (Готтсданкер)" },
+      { value: "control_techniques", title: "Способы контроля: балансировка, двойной слепой" },
+      { value: "factorial_correlation", title: "Факторные планы и корреляционные исследования" },
+      { value: "statistics_methods", title: "Психодиагностика и статистика (Анастази, Сидоренко, Гласс)" },
+      { value: "ethics_publication", title: "Этика исследований и публикации (Кодекс РПО, АНРИ, IMRAD)" },
+      { value: "science_methodology", title: "Наука, парадигма и классификации методов" },
+      { value: "research_program", title: "Программа исследования, гипотезы и выборка" },
+      { value: "observation_method", title: "Метод наблюдения и социометрия (Тема 6)" },
+      { value: "matching", title: "Сопоставление (1А 2Б 3В 4Г)" },
+      { value: "open_definitions", title: "Открытые вопросы: точные определения (21 понятие)" }
+    ],
+    glossaryBadges: ["all", "Шкалы", "Переменные", "Валидность", "Контроль", "Планы", "Артефакты", "Методология", "Статистика", "Этика", "Выборка", "Публикации", "Психометрика", "Нормы", "Критерии", "Анализ данных", "Моделирование"],
+    modes: [
+      { value: "exam11", title: "📝 Письменная работа 19.10 (11 заданий: 2 открытых + 9 тестов)", default: true },
+      { value: "5", title: "Блиц: 5 вопросов" },
+      { value: "10", title: "Марафон: 10 вопросов" },
+      { value: "all", title: "Все вопросы пула" }
+    ]
+  }
+};
+
 // ----------------- ЗВУКОВЫЕ ЭФФЕКТЫ (Web Audio API) -----------------
 const SoundFX = {
   enabled: localStorage.getItem('psy_sound_enabled') !== 'false',
@@ -153,50 +312,64 @@ const SoundFX = {
 
   playCorrect() {
     if (!this.enabled) return;
-    this.init();
-    if (!this.audioCtx) return;
     try {
+      this.init();
+      if (!this.audioCtx) return;
+      if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
       const now = this.audioCtx.currentTime;
       const osc = this.audioCtx.createOscillator();
       const gain = this.audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(523.25, now); // C5
-      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.08); // E5
-      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.16); // G5
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.08);
+      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.18);
+
+      gain.gain.setValueAtTime(0.01, now);
+      gain.gain.linearRampToValueAtTime(0.12, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
       osc.connect(gain);
       gain.connect(this.audioCtx.destination);
       osc.start(now);
-      osc.stop(now + 0.3);
+      osc.stop(now + 0.35);
     } catch(e) {}
   },
 
   playWrong() {
     if (!this.enabled) return;
-    this.init();
-    if (!this.audioCtx) return;
     try {
+      this.init();
+      if (!this.audioCtx) return;
+      if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
       const now = this.audioCtx.currentTime;
       const osc = this.audioCtx.createOscillator();
       const gain = this.audioCtx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(220, now); // A3
-      osc.frequency.exponentialRampToValueAtTime(164.81, now + 0.16); // E3
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(260, now);
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.18);
+
+      gain.gain.setValueAtTime(0.01, now);
+      gain.gain.linearRampToValueAtTime(0.1, now + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
       osc.connect(gain);
       gain.connect(this.audioCtx.destination);
       osc.start(now);
-      osc.stop(now + 0.24);
+      osc.stop(now + 0.28);
     } catch(e) {}
   },
 
   playClick() {
     if (!this.enabled) return;
-    this.init();
-    if (!this.audioCtx) return;
     try {
+      this.init();
+      if (!this.audioCtx) return;
+      if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
       const now = this.audioCtx.currentTime;
       const osc = this.audioCtx.createOscillator();
       const gain = this.audioCtx.createGain();
@@ -214,8 +387,9 @@ const SoundFX = {
 
 // ----------------- СОСТОЯНИЕ ПРИЛОЖЕНИЯ -----------------
 const QuizState = {
-  allQuestions: [...QUESTIONS_DATA],
-  filteredPool: [...QUESTIONS_DATA],
+  currentDiscipline: 'psychogenetics',
+  allQuestions: [],
+  filteredPool: [],
   currentRoundQuestions: [],
   currentIndex: 0,
   score: 0,
@@ -233,6 +407,17 @@ const QuizState = {
 
 // DOM Элементы
 const dom = {
+  // Discipline Switcher
+  brandIcon: document.getElementById('brand-icon'),
+  appHeading: document.getElementById('app-heading'),
+  brandSubtitle: document.getElementById('brand-subtitle'),
+  footerCourseTitle: document.getElementById('footer-course-title'),
+  discBtnPsychogenetics: document.getElementById('disc-btn-psychogenetics'),
+  discBtnExperimentalDesign: document.getElementById('disc-btn-experimental-design'),
+  discBadgePsychogenetics: document.getElementById('disc-badge-psychogenetics'),
+  discBadgeDesign: document.getElementById('disc-badge-design'),
+
+  // Header controls
   themeToggleBtn: document.getElementById('theme-toggle-btn'),
   themeIcon: document.getElementById('theme-icon'),
   soundToggleBtn: document.getElementById('sound-toggle-btn'),
@@ -240,8 +425,11 @@ const dom = {
   statsAccVal: document.getElementById('stats-acc-val'),
   statsStreakVal: document.getElementById('stats-streak-val'),
 
+  // Navigation tabs
   tabBtnQuiz: document.getElementById('tab-btn-quiz'),
   tabBtnGlossary: document.getElementById('tab-btn-glossary'),
+  tabQuizCount: document.getElementById('tab-quiz-count'),
+  tabGlossaryCount: document.getElementById('tab-glossary-count'),
   quizView: document.getElementById('quiz-view'),
   glossaryView: document.getElementById('glossary-view'),
 
@@ -282,8 +470,11 @@ const dom = {
   reviewItemsContainer: document.getElementById('review-items-container'),
 
   // Glossary
+  cheatSheetTitle: document.getElementById('cheat-sheet-title'),
+  cheatSheetGrid: document.getElementById('cheat-sheet-grid'),
   glossarySearchInput: document.getElementById('glossary-search-input'),
   clearSearchBtn: document.getElementById('clear-search-btn'),
+  glossaryCategoriesFilter: document.getElementById('glossary-categories-filter'),
   glossaryMatchesCounter: document.getElementById('glossary-matches-counter'),
   glossaryGridContainer: document.getElementById('glossary-grid-container'),
   confettiCanvas: document.getElementById('confetti-canvas')
@@ -294,9 +485,133 @@ function init() {
   setupSound();
   setupEventListeners();
   setupKeyboardShortcuts();
-  renderGlossary(GLOSSARY_TERMS);
+
+  // Инициализируем активную дисциплину
+  const savedDiscipline = localStorage.getItem('trainer_active_discipline') || 'psychogenetics';
+  switchDiscipline(savedDiscipline, false);
+}
+
+// ----------------- ПЕРЕКЛЮЧЕНИЕ ДИСЦИПЛИН -----------------
+function switchDiscipline(disciplineKey, shouldPlaySound = true) {
+  if (shouldPlaySound) SoundFX.playClick();
+  const disc = DISCIPLINES[disciplineKey] || DISCIPLINES.psychogenetics;
+  QuizState.currentDiscipline = disc.id;
+  localStorage.setItem('trainer_active_discipline', disc.id);
+
+  // Обновляем кнопки переключения
+  if (dom.discBtnPsychogenetics && dom.discBtnExperimentalDesign) {
+    const isPsy = (disc.id === 'psychogenetics');
+    dom.discBtnPsychogenetics.classList.toggle('active', isPsy);
+    dom.discBtnPsychogenetics.setAttribute('aria-selected', isPsy ? 'true' : 'false');
+    dom.discBtnExperimentalDesign.classList.toggle('active', !isPsy);
+    dom.discBtnExperimentalDesign.setAttribute('aria-selected', !isPsy ? 'true' : 'false');
+  }
+
+  // Обновляем текстовые метаданные
+  if (dom.brandIcon) dom.brandIcon.textContent = disc.icon;
+  if (dom.appHeading) dom.appHeading.textContent = disc.title;
+  if (dom.brandSubtitle) dom.brandSubtitle.textContent = disc.subtitle;
+  if (dom.footerCourseTitle) dom.footerCourseTitle.textContent = disc.footerText;
+  document.title = `${disc.title} | Интерактивный веб-тренажер`;
+
+  // Обновляем счетчики в табах
+  if (dom.tabQuizCount) dom.tabQuizCount.textContent = `${disc.questions.length} вопр.`;
+  if (dom.tabGlossaryCount) dom.tabGlossaryCount.textContent = `${disc.glossary.length} тем`;
+  if (dom.discBadgePsychogenetics) dom.discBadgePsychogenetics.textContent = `${DISCIPLINES.psychogenetics.questions.length} вопр.`;
+  if (dom.discBadgeDesign) dom.discBadgeDesign.textContent = `${DISCIPLINES.experimental_design.questions.length} вопр.`;
+  if (dom.typeSelect && dom.typeSelect.options && dom.typeSelect.options[0]) {
+    dom.typeSelect.options[0].textContent = `Все форматы (${disc.questions.length} вопр.)`;
+  }
+
+  // Обновляем пул вопросов
+  QuizState.allQuestions = [...disc.questions];
+  QuizState.seenQuestionIds.clear();
+  QuizState.mistakesPool = [];
+
+  // Перестраиваем выпадающие списки тем и режимов
+  renderCategorySelectOptions(disc);
+  renderModeSelectOptions(disc);
+
+  // Перестраиваем справочник и шпаргалку
+  renderCheatSheet(disc);
+  renderGlossaryCategories(disc);
+  renderGlossary(disc.glossary);
+
+  // Фильтруем и запускаем раунд
   filterPool();
   startNewQuizRound();
+}
+
+function renderCategorySelectOptions(disc) {
+  if (!dom.categorySelect) return;
+  dom.categorySelect.innerHTML = '';
+  disc.categories.forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat.value;
+    opt.textContent = cat.title;
+    dom.categorySelect.appendChild(opt);
+  });
+  dom.categorySelect.value = 'all';
+}
+
+function renderModeSelectOptions(disc) {
+  if (!dom.modeSelect) return;
+  dom.modeSelect.innerHTML = '';
+  disc.modes.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.value;
+    opt.textContent = m.title;
+    if (m.default) opt.selected = true;
+    dom.modeSelect.appendChild(opt);
+  });
+}
+
+function renderCheatSheet(disc) {
+  if (dom.cheatSheetTitle) {
+    dom.cheatSheetTitle.innerHTML = `<span>${disc.icon}</span> ${disc.cheatSheetTitle}`;
+  }
+  if (!dom.cheatSheetGrid) return;
+  dom.cheatSheetGrid.innerHTML = '';
+
+  disc.cheatSheetItems.forEach(item => {
+    const box = document.createElement('div');
+    box.className = 'cheat-box';
+    box.setAttribute('data-term', item.term);
+    box.innerHTML = `
+      <div class="cheat-box-top">
+        <strong>${item.title}</strong>
+        <span class="cheat-tag">${item.tag}</span>
+      </div>
+      <p>${item.desc}</p>
+    `;
+    box.addEventListener('click', () => {
+      SoundFX.playClick();
+      switchTab('glossary');
+      dom.glossarySearchInput.value = item.term;
+      handleGlossarySearch(item.term);
+      dom.glossarySearchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    dom.cheatSheetGrid.appendChild(box);
+  });
+}
+
+function renderGlossaryCategories(disc) {
+  if (!dom.glossaryCategoriesFilter) return;
+  dom.glossaryCategoriesFilter.innerHTML = '';
+
+  disc.glossaryBadges.forEach((badge, idx) => {
+    const btn = document.createElement('button');
+    btn.className = `gloss-cat-btn ${idx === 0 ? 'active' : ''}`;
+    btn.setAttribute('data-cat', badge);
+    btn.textContent = (badge === 'all') ? 'Все термины' : badge;
+    btn.addEventListener('click', () => {
+      SoundFX.playClick();
+      dom.glossaryCategoriesFilter.querySelectorAll('.gloss-cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterGlossaryByCategory(badge);
+    });
+    dom.glossaryCategoriesFilter.appendChild(btn);
+  });
 }
 
 // ----------------- ТЕМА И ЗВУК -----------------
@@ -350,6 +665,22 @@ function updateSessionStats(isCorrect) {
 
 // ----------------- СЛУШАТЕЛИ СОБЫТИЙ -----------------
 function setupEventListeners() {
+  // Переключалка дисциплин
+  if (dom.discBtnPsychogenetics) {
+    dom.discBtnPsychogenetics.addEventListener('click', () => {
+      if (QuizState.currentDiscipline !== 'psychogenetics') {
+        switchDiscipline('psychogenetics', true);
+      }
+    });
+  }
+  if (dom.discBtnExperimentalDesign) {
+    dom.discBtnExperimentalDesign.addEventListener('click', () => {
+      if (QuizState.currentDiscipline !== 'experimental_design') {
+        switchDiscipline('experimental_design', true);
+      }
+    });
+  }
+
   // Tabs
   dom.tabBtnQuiz.addEventListener('click', () => { SoundFX.playClick(); switchTab('quiz'); });
   dom.tabBtnGlossary.addEventListener('click', () => { SoundFX.playClick(); switchTab('glossary'); });
@@ -399,7 +730,9 @@ function setupEventListeners() {
     SoundFX.playClick();
     dom.categorySelect.value = 'all';
     if (dom.typeSelect) dom.typeSelect.value = 'all';
-    dom.modeSelect.value = '5';
+    const disc = DISCIPLINES[QuizState.currentDiscipline];
+    const defaultMode = disc.modes.find(m => m.default) || disc.modes[0];
+    dom.modeSelect.value = defaultMode.value;
     QuizState.seenQuestionIds.clear();
     filterPool();
     startNewQuizRound();
@@ -416,7 +749,9 @@ function setupEventListeners() {
     const q = QuizState.currentRoundQuestions[QuizState.currentIndex];
     switchTab('glossary');
     let searchWord = '';
-    if (q.type === 'open' && q.canonicalAnswer) {
+    if (q.canonicalTerm) {
+      searchWord = q.canonicalTerm;
+    } else if (q.type === 'open' && q.canonicalAnswer) {
       searchWord = q.canonicalAnswer.split(' ')[0];
     } else if (q.type === 'matching' && q.leftItems && q.leftItems.length) {
       searchWord = q.leftItems[0].text;
@@ -427,7 +762,7 @@ function setupEventListeners() {
     handleGlossarySearch(searchWord);
   });
 
-  // Glossary Search & Category Filter Pills
+  // Glossary Search
   dom.glossarySearchInput.addEventListener('input', (e) => {
     handleGlossarySearch(e.target.value);
   });
@@ -437,42 +772,16 @@ function setupEventListeners() {
     handleGlossarySearch('');
     dom.glossarySearchInput.focus();
   });
-
-  const catBtns = document.querySelectorAll('.gloss-cat-btn');
-  catBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      SoundFX.playClick();
-      catBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      filterGlossaryByCategory(btn.getAttribute('data-cat'));
-    });
-  });
-
-  // Cheat Sheet Card Clicks
-  const cheatBoxes = document.querySelectorAll('.cheat-box');
-  cheatBoxes.forEach(box => {
-    box.addEventListener('click', () => {
-      SoundFX.playClick();
-      const termName = box.getAttribute('data-term') || '';
-      dom.glossarySearchInput.value = termName;
-      handleGlossarySearch(termName);
-      dom.glossarySearchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-  });
 }
 
 // ----------------- ГОРЯЧИЕ КЛАВИШИ -----------------
 function setupKeyboardShortcuts() {
   window.addEventListener('keydown', (e) => {
-    // Не перехватываем, если пользователь вводит текст в инпутах
     const isInputActive = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
-    
-    // Если вопрос открытый и активен инпут — Enter обрабатывается самим инпутом
     if (isInputActive && e.key !== 'Escape') {
       return;
     }
 
-    // Если тест не отображается
     if (dom.quizView.style.display === 'none' || dom.quizCardContainer.style.display === 'none') {
       return;
     }
@@ -480,7 +789,6 @@ function setupKeyboardShortcuts() {
     const q = QuizState.currentRoundQuestions[QuizState.currentIndex];
     if (!q) return;
 
-    // Когда ответ уже дан: Enter или Space переходит к следующему
     if (QuizState.isAnswered) {
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') {
         e.preventDefault();
@@ -490,7 +798,6 @@ function setupKeyboardShortcuts() {
       return;
     }
 
-    // Выбор вариантов по 1, 2, 3, 4 для choice
     if (q.type === 'choice' || !q.type) {
       if (e.key === '1') { e.preventDefault(); selectChoiceOption(0); }
       else if (e.key === '2') { e.preventDefault(); selectChoiceOption(1); }
@@ -498,7 +805,6 @@ function setupKeyboardShortcuts() {
       else if (e.key === '4') { e.preventDefault(); selectChoiceOption(3); }
     }
 
-    // Escape для пропуска
     if (e.key === 'Escape') {
       e.preventDefault();
       SoundFX.playClick();
@@ -523,7 +829,7 @@ function switchTab(tab) {
 
 // ----------------- ЛОГИКА ТЕСТА -----------------
 function filterPool() {
-  const cat = dom.categorySelect.value;
+  const cat = dom.categorySelect ? dom.categorySelect.value : 'all';
   const typ = dom.typeSelect ? dom.typeSelect.value : 'all';
 
   QuizState.filteredPool = QuizState.allQuestions.filter(q => {
@@ -533,7 +839,9 @@ function filterPool() {
     return matchCat && matchType;
   });
 
-  dom.poolCounterBadge.textContent = `В пуле: ${QuizState.filteredPool.length} вопр.`;
+  if (dom.poolCounterBadge) {
+    dom.poolCounterBadge.textContent = `В пуле: ${QuizState.filteredPool.length} вопр.`;
+  }
 }
 
 function startNewQuizRound() {
@@ -544,6 +852,12 @@ function startNewQuizRound() {
     dom.categorySelect.value = 'all';
     if (dom.typeSelect) dom.typeSelect.value = 'all';
     filterPool();
+  }
+
+  // СПЕЦИАЛЬНЫЙ РЕЖИМ: Письменная работа 19.10 (11 заданий: 2 открытых + 9 тестов)
+  if (dom.modeSelect && dom.modeSelect.value === 'exam11') {
+    buildExam11Round();
+    return;
   }
 
   const requestedSize = dom.modeSelect.value === 'all' 
@@ -561,6 +875,50 @@ function startNewQuizRound() {
   shuffleArray(unseen);
 
   QuizState.currentRoundQuestions = unseen.slice(0, requestedSize);
+  QuizState.roundSize = QuizState.currentRoundQuestions.length;
+  QuizState.currentIndex = 0;
+  QuizState.score = 0;
+  QuizState.userAnswers = [];
+  QuizState.isAnswered = false;
+
+  QuizState.currentRoundQuestions.forEach(q => QuizState.seenQuestionIds.add(q.id));
+
+  dom.quizCardContainer.style.display = 'block';
+  dom.resultScreenContainer.style.display = 'none';
+
+  renderCurrentQuestion();
+}
+
+// Генерация экзаменационного варианта (11 заданий: 2 открытых + 9 тестов)
+function buildExam11Round() {
+  const openPool = QuizState.allQuestions.filter(q => q.type === 'open');
+  const scalesPool = QuizState.allQuestions.filter(q => q.category === 'scales_tasks');
+  const varsPool = QuizState.allQuestions.filter(q => q.category === 'variables_tasks');
+  const otherPool = QuizState.allQuestions.filter(q => q.type !== 'open' && q.category !== 'scales_tasks' && q.category !== 'variables_tasks');
+
+  // Выбираем 2 открытых вопроса
+  shuffleArray(openPool);
+  const selectedOpen = openPool.slice(0, 2);
+
+  // Выбираем 9 тестов: 3 по шкалам + 3 по НП/ЗП + 3 по наблюдению/методам/этике
+  shuffleArray(scalesPool);
+  shuffleArray(varsPool);
+  shuffleArray(otherPool);
+
+  const selectedScales = scalesPool.slice(0, 3);
+  const selectedVars = varsPool.slice(0, 3);
+  const selectedOther = otherPool.slice(0, 3);
+
+  let selectedTests = [...selectedScales, ...selectedVars, ...selectedOther];
+  if (selectedTests.length < 9) {
+    const remaining = QuizState.allQuestions.filter(q => q.type !== 'open' && !selectedTests.some(t => t.id === q.id));
+    shuffleArray(remaining);
+    selectedTests = selectedTests.concat(remaining.slice(0, 9 - selectedTests.length));
+  }
+  shuffleArray(selectedTests);
+
+  // Сначала идут 2 открытых определения (как в билете), затем 9 тестовых заданий
+  QuizState.currentRoundQuestions = [...selectedOpen, ...selectedTests];
   QuizState.roundSize = QuizState.currentRoundQuestions.length;
   QuizState.currentIndex = 0;
   QuizState.score = 0;
@@ -648,7 +1006,6 @@ function renderChoiceQuestion(q) {
   container.className = 'options-list';
   const letters = ['A', 'B', 'C', 'D'];
 
-  // Генерируем случайную перестановку вариантов для текущего показа
   const displayedIndices = q.options.map((_, i) => i);
   shuffleArray(displayedIndices);
   q._displayedIndices = displayedIndices;
@@ -715,16 +1072,27 @@ function selectChoiceOption(selectedDisplayedIdx) {
   revealAnswerExplanation(q);
 }
 
-// 2. Открытый ответ
+// 2. Открытый ответ (с эталонными характеристиками и самопроверкой)
 function renderOpenQuestion(q) {
   const wrapper = document.createElement('div');
   wrapper.className = 'open-question-wrapper';
   
   // Вычисляем подсказку
-  const canon = q.canonicalAnswer || (q.acceptedAnswers ? q.acceptedAnswers[0] : '');
-  const hintLength = canon.length;
-  const firstLetter = canon.charAt(0).toUpperCase();
-  const hintText = `${firstLetter}... (${hintLength} букв)`;
+  let hintText = '';
+  if (q.canonicalTerm) {
+    hintText = `Понятие: ${q.canonicalTerm}`;
+  } else if (q.hint) {
+    hintText = q.hint;
+  } else {
+    const canon = q.canonicalAnswer || (q.acceptedAnswers ? q.acceptedAnswers[0] : '');
+    if (canon.length > 25) {
+      const words = canon.split(' ').slice(0, 3).join(' ');
+      hintText = `Начало формулировки: ${words}...`;
+    } else {
+      const firstLetter = canon.charAt(0).toUpperCase();
+      hintText = `${firstLetter}... (${canon.length} букв)`;
+    }
+  }
 
   wrapper.innerHTML = `
     <div class="open-input-group">
@@ -732,7 +1100,7 @@ function renderOpenQuestion(q) {
         type="text" 
         id="open-text-input" 
         class="open-text-input" 
-        placeholder="Введите термин, число или понятие..." 
+        placeholder="Введите определение, ключевые признаки или термин..." 
         autocomplete="off"
       >
       <button id="submit-open-btn" class="btn-primary">Ответить</button>
@@ -742,6 +1110,12 @@ function renderOpenQuestion(q) {
       <span id="hint-display-box" class="hint-text-box" style="display: none;">${hintText}</span>
     </div>
     <div id="open-feedback-msg" class="open-feedback-badge"></div>
+    <div id="self-grade-box" class="self-grade-container" style="display: none;">
+      <span class="self-grade-label">Сверили с эталоном ниже? Если суть и ключевые свойства названы верно:</span>
+      <button id="self-grade-credit-btn" class="self-grade-btn" type="button">
+        ✓ Засчитать как верный ответ (+1 балл)
+      </button>
+    </div>
   `;
 
   dom.dynamicQuestionBody.appendChild(wrapper);
@@ -758,13 +1132,13 @@ function renderOpenQuestion(q) {
     hintBox.style.display = hintBox.style.display === 'none' ? 'inline-block' : 'none';
   });
 
-  submitBtn.addEventListener('click', () => handleOpenSubmit(input));
+  submitBtn.addEventListener('click', () => handleOpenSubmit(input, wrapper));
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleOpenSubmit(input);
+    if (e.key === 'Enter') handleOpenSubmit(input, wrapper);
   });
 }
 
-function handleOpenSubmit(input) {
+function handleOpenSubmit(input, wrapper) {
   if (QuizState.isAnswered) return;
   const rawVal = input.value.trim();
   if (!rawVal) {
@@ -778,20 +1152,56 @@ function handleOpenSubmit(input) {
   const q = QuizState.currentRoundQuestions[QuizState.currentIndex];
   const cleanInput = cleanAnswerString(rawVal);
 
-  const isCorrect = q.acceptedAnswers.some(ans => cleanAnswerString(ans) === cleanInput);
-  const feedbackMsg = dom.dynamicQuestionBody.querySelector('#open-feedback-msg');
+  // Проверка: точное совпадение или частичное совпадение ключевых синонимов
+  let isCorrect = false;
+  if (q.acceptedAnswers && q.acceptedAnswers.length) {
+    isCorrect = q.acceptedAnswers.some(ans => {
+      const cleanA = cleanAnswerString(ans);
+      return cleanInput === cleanA ||
+             (cleanInput.length >= 4 && cleanInput.includes(cleanA)) ||
+             (cleanA.length >= 4 && cleanA.includes(cleanInput));
+    });
+  }
+
+  const feedbackMsg = wrapper.querySelector('#open-feedback-msg');
+  const selfGradeBox = wrapper.querySelector('#self-grade-box');
+  const selfGradeBtn = wrapper.querySelector('#self-grade-credit-btn');
 
   if (isCorrect) {
     QuizState.score++;
     SoundFX.playCorrect();
     input.classList.add('correct');
-    feedbackMsg.innerHTML = '<span style="color: var(--accent-emerald);">✓ Абсолютно верно!</span>';
+    feedbackMsg.innerHTML = '<span style="color: var(--accent-emerald);">✓ Отлично! Ключевые критерии понятия названы верно.</span>';
   } else {
     SoundFX.playWrong();
     input.classList.add('wrong');
-    feedbackMsg.innerHTML = `<span style="color: var(--accent-rose);">✗ Неверно. Правильный ответ: <strong>${q.canonicalAnswer}</strong></span>`;
+    feedbackMsg.innerHTML = `<span style="color: var(--accent-rose);">Ознакомьтесь с эталонным определением ниже:</span>`;
     if (!QuizState.mistakesPool.some(item => item.id === q.id)) {
       QuizState.mistakesPool.push(q);
+    }
+    // Показываем кнопку самопроверки
+    if (selfGradeBox) {
+      selfGradeBox.style.display = 'flex';
+      selfGradeBtn.addEventListener('click', () => {
+        SoundFX.playCorrect();
+        QuizState.score++;
+        input.classList.remove('wrong');
+        input.classList.add('correct');
+        feedbackMsg.innerHTML = '<span style="color: var(--accent-emerald);">✓ Ответ засчитан учащимся как верный!</span>';
+        selfGradeBtn.disabled = true;
+        selfGradeBtn.style.opacity = '0.6';
+        selfGradeBtn.textContent = 'Зачтено ✓';
+        // Обновляем статистику
+        QuizState.sessionCorrectCount++;
+        QuizState.currentStreak++;
+        const acc = Math.round((QuizState.sessionCorrectCount / QuizState.sessionAnsweredCount) * 100);
+        dom.statsAccVal.textContent = `${acc}%`;
+        dom.statsStreakVal.textContent = QuizState.currentStreak;
+        // Убираем из ошибок
+        QuizState.mistakesPool = QuizState.mistakesPool.filter(item => item.id !== q.id);
+        const ansRecord = QuizState.userAnswers.find(a => a.question.id === q.id);
+        if (ansRecord) ansRecord.isCorrect = true;
+      });
     }
   }
 
@@ -818,7 +1228,6 @@ function renderMatchingQuestion(q) {
     selectedMatches[item.id] = null;
   });
 
-  // Случайно перемешиваем порядок карточек определений в правом столбце
   const displayedRightItems = [...q.rightItems];
   shuffleArray(displayedRightItems);
 
@@ -875,7 +1284,6 @@ function renderMatchingQuestion(q) {
   const chipButtons = wrapper.querySelectorAll('.matching-chip-btn');
   const submitBtn = wrapper.querySelector('#submit-matching-btn');
 
-  // Клик по чипам вариантов
   chipButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       if (QuizState.isAnswered) return;
@@ -883,7 +1291,6 @@ function renderMatchingQuestion(q) {
       const leftId = btn.getAttribute('data-left-id');
       const rightId = btn.getAttribute('data-right-id');
 
-      // Снимаем выделение с других в этой строке
       wrapper.querySelectorAll(`.matching-chip-btn[data-left-id="${leftId}"]`).forEach(b => {
         b.classList.remove('selected');
       });
@@ -891,7 +1298,6 @@ function renderMatchingQuestion(q) {
       btn.classList.add('selected');
       selectedMatches[leftId] = rightId;
 
-      // Обновляем превью
       const previewStr = q.leftItems.map(item => `${item.id}${selectedMatches[item.id] || '?'}`).join(' ');
       previewEl.textContent = previewStr;
     });
@@ -900,7 +1306,6 @@ function renderMatchingQuestion(q) {
   submitBtn.addEventListener('click', () => {
     if (QuizState.isAnswered) return;
 
-    // Проверяем, все ли выбраны
     const unpicked = q.leftItems.filter(item => !selectedMatches[item.id]);
     if (unpicked.length > 0) {
       alert(`Пожалуйста, выберите соответствие для всех пунктов (осталось выбрать: ${unpicked.map(u => u.id).join(', ')})`);
@@ -910,7 +1315,6 @@ function renderMatchingQuestion(q) {
     QuizState.isAnswered = true;
     submitBtn.disabled = true;
 
-    // Проверяем правильность
     let allCorrect = true;
     q.leftItems.forEach(item => {
       const userChoice = selectedMatches[item.id];
@@ -1013,7 +1417,6 @@ function finishQuizRound() {
   dom.resultScoreNum.textContent = score;
   dom.resultScoreTotal.textContent = `из ${total}`;
 
-  // Анимация SVG круга
   const circumference = 314;
   const offset = circumference - (circumference * percent / 100);
   dom.scoreRingFill.style.strokeDashoffset = offset;
@@ -1028,20 +1431,19 @@ function finishQuizRound() {
 
   if (percent === 100) {
     dom.resultVerdictTitle.textContent = 'Превосходно! 100% результат! 🏆';
-    dom.resultVerdictDesc.textContent = 'Вы безупречно справились со всеми заданиями раунда (тесты, сопоставления и термины).';
+    dom.resultVerdictDesc.textContent = 'Вы безупречно справились со всеми заданиями раунда (тесты, сопоставления и определения).';
     triggerConfetti();
   } else if (percent >= 80) {
     dom.resultVerdictTitle.textContent = 'Отличный результат! 🌟';
-    dom.resultVerdictDesc.textContent = 'Твердое знание определений и ключевых понятий курса психогенетики.';
+    dom.resultVerdictDesc.textContent = 'Твердое знание определений, шкалирования и переменных курса.';
   } else if (percent >= 60) {
     dom.resultVerdictTitle.textContent = 'Хорошая база! 👍';
-    dom.resultVerdictDesc.textContent = 'Основные термины усвоены. Обратите внимание на ошибки в списке ниже.';
+    dom.resultVerdictDesc.textContent = 'Материал в целом понят. Обратите внимание на ошибки в списке ниже.';
   } else {
     dom.resultVerdictTitle.textContent = 'Есть над чем поработать 📚';
     dom.resultVerdictDesc.textContent = 'Рекомендуем повторить ключевые темы во вкладке «Справочник и Термины».';
   }
 
-  // Категориальная разбивка результатов
   renderCategoryBreakdown();
 
   const wrongAnswersCount = QuizState.userAnswers.filter(a => !a.isCorrect).length;
@@ -1154,10 +1556,11 @@ function handleGlossarySearch(query) {
   const cleanQ = query.toLowerCase().trim();
   dom.clearSearchBtn.style.display = cleanQ ? 'block' : 'none';
 
-  const activeCatBtn = document.querySelector('.gloss-cat-btn.active');
+  const disc = DISCIPLINES[QuizState.currentDiscipline];
+  const activeCatBtn = dom.glossaryCategoriesFilter ? dom.glossaryCategoriesFilter.querySelector('.gloss-cat-btn.active') : null;
   const activeCat = activeCatBtn ? activeCatBtn.getAttribute('data-cat') : 'all';
 
-  const filtered = GLOSSARY_TERMS.filter(item => {
+  const filtered = disc.glossary.filter(item => {
     const matchCat = (activeCat === 'all') || (item.badge === activeCat);
     const matchText = item.term.toLowerCase().includes(cleanQ) || item.desc.toLowerCase().includes(cleanQ);
     return matchCat && matchText;
@@ -1168,7 +1571,8 @@ function handleGlossarySearch(query) {
 
 function filterGlossaryByCategory(category) {
   const searchVal = dom.glossarySearchInput.value.toLowerCase().trim();
-  const filtered = GLOSSARY_TERMS.filter(item => {
+  const disc = DISCIPLINES[QuizState.currentDiscipline];
+  const filtered = disc.glossary.filter(item => {
     const matchCat = (category === 'all') || (item.badge === category);
     const matchText = !searchVal || item.term.toLowerCase().includes(searchVal) || item.desc.toLowerCase().includes(searchVal);
     return matchCat && matchText;
@@ -1181,7 +1585,7 @@ function cleanAnswerString(str) {
     .trim()
     .toLowerCase()
     .replace(/ё/g, 'е')
-    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()«»"]/g, '')
     .replace(/\s+/g, ' ');
 }
 
